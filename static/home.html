@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Chat..</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/chat/static/linkify.min.js"></script>
+
+<script>
+   var Notification = window.Notification || window.mozNotification || window.webkitNotification;
+
+   var InvalidOp = 0
+   var RegisterOp = 1
+   var UnregisterOp = 2
+   var MessageOp = 3
+   var NoticeOp = 4
+   var JoinOp = 5
+   var NickOp = 6
+   var PingOp = 7
+
+   function requestNotifyPermission() {
+      Notification.requestPermission(function (permission) {
+         // console.log(permission);
+      });
+   }
+
+   function showNotification(title, body) {
+      var instance = new Notification(
+         title, {
+            body: body
+         }
+      );
+      setTimeout(function(){
+         instance.close();
+      }, 990);
+
+      instance.onclick = function () {
+         // Something to do
+      };
+      instance.onerror = function () {
+         // Something to do
+      };
+      instance.onshow = function () {
+         // Something to do
+      };
+      instance.onclose = function () {
+         // Something to do
+      };
+   }
+</script>
+
+
+<script type="text/javascript">
+    $(function() {
+
+    var conn;
+    var msg = $("#msg");
+    var name = $("#name");
+    var log = $("#log");
+
+
+    function setCookie(cname, cvalue, exdays) {
+       var d = new Date();
+       d.setTime(d.getTime() + (exdays*24*60*60*1000));
+       var expires = "expires="+d.toUTCString();
+       document.cookie = cname + "=" + cvalue + "; " + expires;
+    }
+    function getCookie(cname) {
+       var name = cname + "=";
+       var ca = document.cookie.split(';');
+       for(var i=0; i<ca.length; i++) {
+           var c = ca[i];
+           while (c.charAt(0)==' ') c = c.substring(1);
+           if (c.indexOf(name) == 0) return c.substring(name.length,c.length);
+       }
+       return "";
+    }
+
+    function formatMessage(msg) {
+      var links = linkify.find(msg)
+      for(i=0; i<links.length; i++) {
+         msg = msg.replace(links[i].href, "<a target='_blank' href='" + links[i].href + "'>" + links[i].href + "</a>")
+      }
+      return msg
+    }
+
+    var username = getCookie("username")
+    if (username != "") {
+      name.val(username)
+    }
+
+    name.change(function() {
+       console.log("name changed: " + $(this).val())
+       data = {
+          'op': NickOp,
+          'from': $(this).val(),
+       }
+       conn.send(JSON.stringify(data))
+       setCookie("username", $(this).val())
+    })
+
+    function appendLog(msg) {
+        var d = log[0]
+        var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+        msg.appendTo(log)
+        if (doScroll) {
+            d.scrollTop = d.scrollHeight - d.clientHeight;
+        }
+    }
+
+    $("#form").submit(function() {
+        if (!conn) {
+            return false;
+        }
+        if (!msg.val()) {
+            return false;
+        }
+        if (!name.val()) {
+            alert('set a username please')
+            return false;
+        }
+        data = {
+         'op': MessageOp,
+         'from': name.val(),
+         'message': msg.val(),
+        }
+        conn.send(JSON.stringify(data))
+        msg.val("");
+        return false
+    });
+
+    if (window["WebSocket"]) {
+        var wsproto = "ws:"
+        if (window.location.protocol == "https:") {
+           wsproto = "wss:"
+        }
+        console.log("websocket protocol " + wsproto)
+        conn = new WebSocket(wsproto + "//{{$}}/chat/ws");
+
+        conn.onopen = function(evt) {
+            var ping = function() {
+               data = {
+                  'op': PingOp,
+                  'from': name.val(),
+               }
+               conn.send(JSON.stringify(data))
+               setTimeout(ping, 30000)
+            }
+            ping()
+            data = {
+               'op': JoinOp,
+               'from': name.val(),
+            }
+            conn.send(JSON.stringify(data))
+
+            if (name.val() != "") {
+               data = {
+                  'op': NickOp,
+                  'from': name.val(),
+               }
+               conn.send(JSON.stringify(data))
+            }
+
+            appendLog($("<div><b>Connection opened.</b></div>"))
+        }
+        conn.onclose = function(evt) {
+            appendLog($("<div><b>Connection closed.</b></div>"))
+        }
+        conn.onmessage = function(evt) {
+               data = JSON.parse(evt.data)
+               console.log("onmessage: " + evt.data);
+               if (data['op'] == NoticeOp) {
+                  prefix = " :notice: "
+                  appendLog($("<div/>").text(prefix + data['message']))
+                  showNotification("notice", data['message'])
+               } else if ( (data['op'] == MessageOp) || (data['op'] == HistoryOp) ) {
+
+                  var d = Date().toLocaleString()
+                  prefix = d + " <" + data['from'] + "> "
+                  appendLog($("<div/>").html(prefix + formatMessage(data['message'])))
+                  if (data['notify'] == true) {
+                     showNotification(data['from'], data['message'])
+                  }
+               }
+        }
+    } else {
+        appendLog($("<div><b>Your browser does not support WebSockets.</b></div>"))
+    }
+    });
+</script>
+<style type="text/css">
+html {
+    overflow: hidden;
+}
+
+body {
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: gray;
+}
+
+#log {
+    background: white;
+    border: 1px solid black;
+    margin: 0;
+    padding: 0.5em 0.5em 0.5em 0.5em;
+    top: 1.5em;
+    left: 0.5em;
+    right: 0.5em;
+    bottom: 3em;
+    overflow: auto;
+    position: absolute;
+}
+
+#form {
+    padding: 0 0.5em 0 0.5em;
+    margin: 0;
+    bottom: 1em;
+    left: 0px;
+    width: 100%;
+    overflow: hidden;
+    position: absolute;
+}
+
+</style>
+</head>
+<body>
+&nbsp; <span style="color: white;">To get desktop notifications </span><button type="button" onclick="requestNotifyPermission()">Notify me!</button>
+<p/>
+<div id="log"></div>
+<form id="form">
+    <input type="submit" value="Send" />
+    <input type="text" id="name" size="15"/>
+    <input type="text" id="msg" size="64" autocomplete="off"/>
+</form>
+</body>
+</html>
+
+
+

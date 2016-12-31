@@ -1,0 +1,154 @@
+package main
+
+import (
+	"container/list"
+	"flag"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"sync"
+	"text/template"
+
+	"github.com/sigmonsays/buddybot"
+)
+
+const (
+	HistoryOp = iota + 100
+)
+
+var addr = flag.String("addr", ":8080", "http service address")
+
+type chatHandler struct {
+	mx        sync.Mutex
+	staticDir string
+	history   *list.List
+}
+
+func (h *chatHandler) serveHome(w http.ResponseWriter, r *http.Request) {
+	log.Printf("request %s", r.URL)
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", 405)
+		return
+	}
+	home_html := filepath.Join(h.staticDir, "home.html")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	homeTempl := template.Must(template.ParseFiles(home_html))
+	homeTempl.Execute(w, r.Host)
+}
+
+func (h *chatHandler) addHistory(m *buddybot.Message) {
+	h.mx.Lock()
+	defer h.mx.Unlock()
+	h.history.PushBack(m)
+	if h.history.Len() > 5 {
+		if e := h.history.Front(); e != nil {
+			h.history.Remove(e)
+		}
+	}
+}
+
+func (h *chatHandler) getHistory() []*buddybot.Message {
+	h.mx.Lock()
+	defer h.mx.Unlock()
+	ret := make([]*buddybot.Message, 0)
+	for e := h.history.Front(); e != nil; e = e.Next() {
+		ret = append(ret, e.Value.(*buddybot.Message))
+	}
+	return ret
+}
+
+func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	log.Printf("handleMessage op:%s\n", op)
+
+	if op == buddybot.MessageOp {
+		hub.SendBroadcast(m)
+
+	} else if op == buddybot.RegisterOp {
+		// play back history
+		for _, hm := range h.getHistory() {
+			hm.Op = HistoryOp
+			hub.SendMessage(c, hm)
+		}
+	} else if op == buddybot.UnregisterOp {
+		hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has left", c.Name))
+		//} else if m.Op == HistoryOp {
+		//		hub.sendBroadcast(m)
+
+	} else if op == buddybot.NickOp {
+
+		if c.Name == "" {
+			hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has joined", m.From))
+		} else {
+			hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has changed their name to %s", c.Name, m.From))
+		}
+		c.Name = m.From
+
+	} else if op == buddybot.NoticeOp {
+		hub.SendBroadcast(m)
+	} else {
+		log.Printf("Unhandled op %+v\n", m)
+	}
+	return nil
+}
+
+func main() {
+
+	gopath := os.Getenv("GOPATH")
+	var staticDir string
+	flag.StringVar(&staticDir, "static", "", "location of static data")
+
+	if staticDir == "" && gopath != "" {
+		staticDir = filepath.Join(gopath, "src/github.com/sigmonsays/buddybot/static")
+	}
+
+	flag.Parse()
+
+	hub := buddybot.NewHub()
+
+	srv, err := buddybot.NewHandler(hub)
+	if err != nil {
+		log.Fatal("NewHandler: ", err)
+	}
+
+	handler := &chatHandler{
+		staticDir: staticDir,
+		history:   list.New(),
+	}
+
+	opcodes := []buddybot.OpCode{
+		buddybot.RegisterOp,
+		buddybot.UnregisterOp,
+		buddybot.NoticeOp,
+		buddybot.NickOp,
+		buddybot.MessageOp,
+	}
+	for _, op := range opcodes {
+		hub.OnCallback(op, handler.handleMessage)
+	}
+	go hub.Start()
+
+	mx := http.NewServeMux()
+
+	log.Printf("serving static data from %s", staticDir)
+
+	mx.HandleFunc("/", handler.serveHome)
+	mx.HandleFunc("/ws", srv.ServeWebSocket)
+	mx.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
+
+	alias := "/chat"
+	mx.HandleFunc(alias, handler.serveHome)
+	mx.HandleFunc(alias+"/ws", srv.ServeWebSocket)
+	mx.Handle(alias+"/static/", http.StripPrefix(alias+"/static/", http.FileServer(http.Dir(staticDir))))
+
+	hs := &http.Server{
+		Addr:    *addr,
+		Handler: mx,
+	}
+
+	err = hs.ListenAndServe()
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+}

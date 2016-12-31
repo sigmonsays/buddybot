@@ -1,0 +1,3 @@
+# Buddybot
+
+Just a simple throw away bot...  for now...
