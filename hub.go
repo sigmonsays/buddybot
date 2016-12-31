@@ -2,7 +2,6 @@ package buddybot
 
 import (
 	"fmt"
-	"log"
 	"sync"
 )
 
@@ -92,13 +91,13 @@ func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
 	if ok == false {
 		return nil
 	}
-	log.Printf("dispatch %s: callbacks:%d", op, len(callbacks))
+	log.Infof("dispatch %s: callbacks:%d", op, len(callbacks))
 
 	var err error
 	for _, callback := range callbacks {
 		err = callback(op, h, c, m)
 		if err != nil {
-			log.Printf("callback %s: %s", op, err)
+			log.Infof("callback %s: %s", op, err)
 		}
 	}
 
@@ -109,13 +108,13 @@ func (h *Hub) Start() {
 	for {
 		select {
 		case c := <-h.register:
-			log.Printf("register connection id:%d remote:%s\n", c.id, c.ws.RemoteAddr())
+			log.Infof("register connection id:%d remote:%s", c.id, c.ws.RemoteAddr())
 			h.connections[c] = true
 
 			h.dispatch(RegisterOp, c, nil)
 
 		case c := <-h.unregister:
-			log.Printf("unregister connection id:%d remote:%s\n", c.id, c.ws.RemoteAddr())
+			log.Infof("unregister connection id:%d remote:%s", c.id, c.ws.RemoteAddr())
 			if _, ok := h.connections[c]; ok {
 				delete(h.connections, c)
 				close(c.send)
@@ -130,13 +129,13 @@ func (h *Hub) Start() {
 
 			err := m.FromJson(data.data)
 			if err != nil {
-				log.Printf("ERROR: FromJson [ %s ]: %s", data, err)
+				log.Infof("ERROR: FromJson [ %s ]: %s", data, err)
 				continue
 			}
-			log.Printf("dispatch %s %s %s\n", m.Op, data, string(data.data))
+			log.Infof("dispatch %s %s %s", m.Op, data, string(data.data))
 			err = h.dispatch(m.Op, data.connection, m)
 			if err != nil {
-				log.Printf("dispatch %s: %s\n", m.Op, err)
+				log.Infof("dispatch %s: %s", m.Op, err)
 			}
 		}
 	}

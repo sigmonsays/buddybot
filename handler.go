@@ -1,7 +1,6 @@
 package buddybot
 
 import (
-	"log"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -25,7 +24,7 @@ type Handler struct {
 func (h *Handler) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		log.Errorf("Upgrade: %s", err)
 		return
 	}
 	id := atomic.AddInt64(&h.connections, 1)
