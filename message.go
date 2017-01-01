@@ -30,6 +30,9 @@ const (
 
 	// a ping to keep the websocket connection alive
 	PingOp
+
+	// Client List op sends a list of connected clients to the connection
+	ClientListOp
 )
 
 type Message struct {

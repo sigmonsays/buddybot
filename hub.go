@@ -60,6 +60,17 @@ func (h *Hub) SendMessage(c *Connection, m *Message) error {
 	return nil
 }
 
+func (h *Hub) SendTo(c *Connection, m *Message) error {
+	m.Id = c.id
+	select {
+	case c.send <- m:
+	default:
+		close(c.send)
+		delete(h.connections, c)
+	}
+	return nil
+}
+
 func (h *Hub) Send(op OpCode, msg string) {
 	m := &Message{Op: op, Message: msg}
 	h.SendBroadcast(m)
@@ -75,6 +86,27 @@ func (h *Hub) SendBroadcast(m *Message) {
 			delete(h.connections, c)
 		}
 	}
+}
+
+func (h *Hub) SendClientList(id int64) error {
+	destination, err := h.findConnection(id)
+	if err != nil {
+		return err
+	}
+
+	ls := NewClientList()
+	for c := range h.connections {
+		ls.AddClient(c)
+	}
+
+	message := ls.ToJson()
+
+	msg := &Message{
+		Op:      MessageOp,
+		Message: string(message),
+	}
+
+	return h.SendTo(destination, msg)
 }
 
 func (h *Hub) findConnection(id int64) (*Connection, error) {

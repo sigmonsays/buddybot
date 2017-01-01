@@ -79,6 +79,10 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 
 	} else if op == buddybot.NoticeOp {
 		hub.SendBroadcast(m)
+
+	} else if op == buddybot.ClientListOp {
+		hub.SendClientList(m.Id)
+
 	} else {
 		log.Printf("Unhandled op %+v\n", m)
 	}
