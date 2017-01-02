@@ -1,9 +1,13 @@
 package main
 
+//go:generate stringer -type=ConnState
+
 import (
 	"bufio"
 	"encoding/json"
 	"flag"
+	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"os/signal"
@@ -11,6 +15,14 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/sigmonsays/buddybot"
+)
+
+type ConnState int
+
+const (
+	Unknown ConnState = iota
+	Connected
+	Disconnected
 )
 
 func main() {
@@ -23,21 +35,30 @@ func main() {
 	flag.Parse()
 
 	state := &state{
-		addr:     addr,
-		path:     path,
-		identity: buddybot.NewIdentity(),
+		addr:      addr,
+		path:      path,
+		identity:  buddybot.NewIdentity(),
+		connstate: make(chan ConnState, 10),
 	}
 	log.Infof("Identity %s", state.identity.String())
 
-	u := url.URL{Scheme: "ws", Host: addr, Path: path}
+	// signal to interrupt
+	state.interrupt = make(chan os.Signal, 1)
+	signal.Notify(state.interrupt, os.Interrupt)
 
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		log.Errorf("dial: %s", err)
-	}
-
-	state.c = c
-	defer c.Close()
+	// read from stdin for commands
+	state.lines = make(chan string, 2)
+	go func() {
+		rdr := bufio.NewReader(os.Stdin)
+		for {
+			line, err := rdr.ReadString('\n')
+			if err != nil {
+				log.Infof("Read: %s", err)
+				break
+			}
+			state.lines <- line
+		}
+	}()
 
 	state.loop()
 }
@@ -47,6 +68,8 @@ type state struct {
 	path      string
 	identity  *buddybot.Identity
 	interrupt chan os.Signal
+	connstate chan ConnState
+	lines     chan string
 
 	c *websocket.Conn
 }
@@ -60,65 +83,82 @@ func (me *state) NewMessage() *buddybot.Message {
 }
 
 func (me *state) loop() error {
+	var err error
 
-	c := me.c
+	for {
+		err = me.ioloop()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			time.Sleep(time.Duration(1) * time.Second)
+		}
+	}
+
+	return err
+}
+
+func (me *state) ioloop() error {
+
+	// establish connection
+	u := url.URL{Scheme: "ws", Host: me.addr, Path: me.path}
+
+	log.Infof("Connecting to %s", u.String())
+	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		log.Errorf("dial: %s", err)
+		return err
+	}
+
+	me.c = c
+
+	log.Infof("Connecton established")
+
 	done := make(chan struct{})
 
 	// startup the receive loop
 	go func() {
+		log.Tracef("receive loop started")
 		defer c.Close()
 		defer close(done)
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.Infof("read: %s", err)
+				log.Warnf("read: %s", err)
+				me.connstate <- Disconnected
 				return
 			}
 			me.receiveMessage(message)
 		}
-	}()
-
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
-	// signal to interrupt
-	me.interrupt = make(chan os.Signal, 1)
-	signal.Notify(me.interrupt, os.Interrupt)
-
-	// read from stdin for commands
-	lines := make(chan string, 2)
-	go func() {
-		rdr := bufio.NewReader(os.Stdin)
-		for {
-			line, err := rdr.ReadString('\n')
-			if err != nil {
-				log.Infof("Read: %s", err)
-				break
-			}
-			lines <- line
-		}
+		log.Tracef("receive loop exited")
 	}()
 
 	// send a join message
 	j := me.NewMessage()
 	j.Op = buddybot.JoinOp
-	err := c.WriteMessage(websocket.TextMessage, j.Json())
+	err = c.WriteMessage(websocket.TextMessage, j.Json())
 	if err != nil {
 		log.Infof("join: write: %s", err)
 	}
+	log.Debugf("join message sent")
 
 	// see who is online
-	l := me.NewMessage()
-	l.Op = buddybot.ClientListOp
-	err = c.WriteMessage(websocket.TextMessage, l.Json())
-	if err != nil {
-		log.Infof("clientList: write: %s", err)
-	}
+	/*
+		l := me.NewMessage()
+		l.Op = buddybot.ClientListOp
+		err = c.WriteMessage(websocket.TextMessage, l.Json())
+		if err != nil {
+			log.Infof("clientList: write: %s", err)
+		}
+	*/
 
 	// start a ping loop
 	go func() {
+		log.Debugf("ping loop started")
 		d := time.Duration(10) * time.Second
 		t := time.NewTicker(d)
+		defer t.Stop()
+	Loop:
 		for {
 			select {
 			case <-t.C:
@@ -127,15 +167,25 @@ func (me *state) loop() error {
 				err := c.WriteMessage(websocket.TextMessage, p.Json())
 				if err != nil {
 					log.Infof("ping: write: %s", err)
+					me.connstate <- Disconnected
+					break Loop
 				}
 			}
+			me.connstate <- Connected
 		}
+		log.Debugf("ping loop exited")
 	}()
 
 	// just wait on interrupt
 	for {
 		select {
-		case line := <-lines:
+		case cstate := <-me.connstate:
+			if cstate == Disconnected {
+				log.Tracef("disconnected.")
+				return fmt.Errorf("Disconnected")
+			}
+
+		case line := <-me.lines:
 
 			msg := me.NewMessage()
 			msg.Message = line
@@ -148,6 +198,7 @@ func (me *state) loop() error {
 			me.sendMessage(buf)
 
 		case <-me.interrupt:
+			log.Infof("Interrupt received..")
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				log.Infof("message: write close: %s", err)
@@ -155,20 +206,33 @@ func (me *state) loop() error {
 			}
 			select {
 			case <-done:
+				log.Infof("done received from interrupt")
 			case <-time.After(time.Second):
+				log.Infof("timeout from interrupt")
 			}
-			c.Close()
-			return nil
+			return io.EOF
 		}
 	}
+
+	log.Infof("Why here?")
+	return nil
 }
 
 func (me *state) receiveMessage(msg []byte) error {
-	log.Infof("receiveMessage: %s", msg)
+	log.Tracef("receiveMessage: bytes %s", msg)
+
+	m := me.NewMessage()
+	err := json.Unmarshal(msg, m)
+	if err != nil {
+		return err
+	}
+
+	log.Tracef("receiveMessage: %s", m)
 	return nil
 }
 
 func (me *state) sendMessage(msg []byte) error {
+	log.Tracef("sendMessage: bytes %s", msg)
 	err := me.c.WriteMessage(websocket.TextMessage, msg)
 	return err
 }

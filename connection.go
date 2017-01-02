@@ -1,8 +1,10 @@
 package buddybot
 
 import (
-	"github.com/gorilla/websocket"
+	"fmt"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -36,6 +38,10 @@ type Connection struct {
 
 	// Buffered channel of outbound messages.
 	send chan *Message
+}
+
+func (c *Connection) String() string {
+	return fmt.Sprintf("id:%d name:%s ip:%s", c.id, c.Name, c.ws.RemoteAddr())
 }
 
 // readPump pumps messages from the websocket connection to the hub.

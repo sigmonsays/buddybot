@@ -4,6 +4,7 @@ package buddybot
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type OpCode int
@@ -43,6 +44,10 @@ type Message struct {
 	Message    string `json:"message"`
 }
 
+func (m *Message) String() string {
+	return fmt.Sprintf("id:%d op:%s/%d from:%s message:%s",
+		m.Id, m.Op, m.Op, m.From, m.Message)
+}
 func (m *Message) Json() []byte {
 	data, _ := json.Marshal(m)
 	return data

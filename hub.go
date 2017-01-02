@@ -61,6 +61,7 @@ func (h *Hub) SendMessage(c *Connection, m *Message) error {
 }
 
 func (h *Hub) SendTo(c *Connection, m *Message) error {
+	log.Tracef("SendTo conn %s", c)
 	m.Id = c.id
 	select {
 	case c.send <- m:
@@ -77,15 +78,20 @@ func (h *Hub) Send(op OpCode, msg string) {
 }
 
 func (h *Hub) SendBroadcast(m *Message) {
+	cnt := 0
+	err := 0
 	for c := range h.connections {
+		cnt++
 		m.Id = c.id
 		select {
 		case c.send <- m:
 		default:
+			err++
 			close(c.send)
 			delete(h.connections, c)
 		}
 	}
+	log.Tracef("SendBroadcast num-clients=%d (failures %d)", cnt, err)
 }
 
 func (h *Hub) SendClientList(id int64) error {
@@ -139,6 +145,7 @@ func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
 }
 
 func (h *Hub) Start() {
+	log.Debugf("start")
 	for {
 		select {
 		case c := <-h.register:
@@ -166,7 +173,8 @@ func (h *Hub) Start() {
 				log.Infof("ERROR: FromJson [ %s ]: %s", data, err)
 				continue
 			}
-			log.Infof("dispatch %s %s %s", m.Op, data, string(data.data))
+			log.Infof("dispatch op=%s/%d data=%s data=%s",
+				m.Op, m.Op, data, string(data.data))
 			err = h.dispatch(m.Op, data.connection, m)
 			if err != nil {
 				log.Infof("dispatch %s: %s", m.Op, err)
