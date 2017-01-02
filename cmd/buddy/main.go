@@ -34,11 +34,13 @@ func main() {
 	path := "/chat/ws"
 	nick := "default"
 	loglevel := "info"
+	verbose := false
 
 	flag.StringVar(&addr, "addr", addr, "address")
 	flag.StringVar(&path, "path", path, "path")
 	flag.StringVar(&nick, "nick", nick, "nick name")
 	flag.StringVar(&loglevel, "log", loglevel, "log level")
+	flag.BoolVar(&verbose, "verbose", verbose, "be verbose")
 	flag.Parse()
 
 	gologging.SetLogLevel(loglevel)
@@ -48,6 +50,7 @@ func main() {
 		path:      path,
 		identity:  buddybot.NewIdentity(),
 		connstate: make(chan ConnState, 10),
+		verbose:   verbose,
 	}
 
 	state.identity.Nick = nick
@@ -75,6 +78,7 @@ func main() {
 }
 
 type state struct {
+	verbose   bool
 	addr      string
 	path      string
 	identity  *buddybot.Identity
@@ -237,7 +241,9 @@ func (me *state) ioloop() error {
 }
 
 func (me *state) receiveMessage(msg []byte) error {
-	log.Tracef("receiveMessage bytes %s", msg)
+	if me.verbose {
+		log.Tracef("receiveMessage bytes %s", msg)
+	}
 	m := me.NewMessage()
 	err := json.Unmarshal(msg, m)
 	if err != nil {

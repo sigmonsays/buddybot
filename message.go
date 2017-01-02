@@ -1,39 +1,8 @@
-//go:generate stringer -type=OpCode
-
 package buddybot
 
 import (
 	"encoding/json"
 	"fmt"
-)
-
-type OpCode int
-
-const (
-	InvalidOp OpCode = iota
-
-	// client has connected
-	RegisterOp
-
-	// client has disconnected
-	UnregisterOp
-
-	// a message has been sent
-	MessageOp
-
-	// a notice is a informational message. likely from the system
-	NoticeOp
-	// a user has joined
-	JoinOp
-
-	// a user has changed their nick name
-	NickOp
-
-	// a ping to keep the websocket connection alive
-	PingOp
-
-	// Client List op sends a list of connected clients to the connection
-	ClientListOp
 )
 
 type Message struct {

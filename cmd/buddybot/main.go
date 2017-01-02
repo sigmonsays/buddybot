@@ -46,16 +46,7 @@ func main() {
 		history:   list.New(),
 	}
 
-	opcodes := []buddybot.OpCode{
-		buddybot.RegisterOp,
-		buddybot.UnregisterOp,
-		buddybot.MessageOp,
-		buddybot.NoticeOp,
-		buddybot.JoinOp,
-		buddybot.NickOp,
-		// buddybot.PingOp,
-	}
-	for _, op := range opcodes {
+	for _, op := range buddybot.OpCodes() {
 		hub.OnCallback(op, handler.handleMessage)
 	}
 	go hub.Start()
