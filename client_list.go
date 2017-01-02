@@ -5,22 +5,30 @@ import (
 )
 
 type ClientList struct {
-	List map[int64]string
+	List []*Client
+}
+type Client struct {
+	Id       int64
+	Identity string
 }
 
 func NewClientList() *ClientList {
 	cl := &ClientList{
-		List: make(map[int64]string, 0),
+		List: make([]*Client, 0),
 	}
 	return cl
 }
 
 func (me *ClientList) AddClient(c *Connection) {
-	me.List[c.id] = c.Identity
+	cl := &Client{
+		Id:       c.id,
+		Identity: c.Identity,
+	}
+	me.List = append(me.List, cl)
 }
 
 func (me *ClientList) ToJson() []byte {
-	buf, err := json.Marshal(me)
+	buf, err := json.Marshal(me.List)
 	if err != nil {
 		log.Warnf("ToJson: %s", err)
 	}

@@ -89,6 +89,9 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 		}
 		c.Identity = m.From
 
+	} else if op == buddybot.PingOp {
+		// whatever..
+
 	} else if op == buddybot.NoticeOp {
 		hub.SendBroadcast(m)
 
@@ -99,7 +102,7 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 		}
 
 	} else {
-		log.Infof("Unhandled op %+v", m)
+		log.Infof("Unhandled op %s/%d: %+v", m.Op, m.Op, m)
 	}
 	return nil
 }
