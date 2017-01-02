@@ -123,7 +123,7 @@ func (h *Hub) findConnection(id int64) (*Connection, error) {
 			return c, nil
 		}
 	}
-	return nil, fmt.Errorf("not found id:%d", id)
+	return nil, fmt.Errorf("not found cid:%d", id)
 }
 
 func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
@@ -149,13 +149,13 @@ func (h *Hub) Start() {
 	for {
 		select {
 		case c := <-h.register:
-			log.Infof("register connection id:%d remote:%s", c.id, c.ws.RemoteAddr())
+			log.Infof("register connection cid:%d remote:%s", c.id, c.ws.RemoteAddr())
 			h.connections[c] = true
 
 			h.dispatch(RegisterOp, c, nil)
 
 		case c := <-h.unregister:
-			log.Infof("unregister connection id:%d remote:%s", c.id, c.ws.RemoteAddr())
+			log.Infof("unregister connection cid:%d remote:%s", c.id, c.ws.RemoteAddr())
 			if _, ok := h.connections[c]; ok {
 				delete(h.connections, c)
 				close(c.send)

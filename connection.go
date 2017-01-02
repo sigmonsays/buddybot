@@ -41,7 +41,7 @@ type Connection struct {
 }
 
 func (c *Connection) String() string {
-	return fmt.Sprintf("id:%d name:%s ip:%s", c.id, c.Name, c.ws.RemoteAddr())
+	return fmt.Sprintf("cid:%d name:%s ip:%s", c.id, c.Name, c.ws.RemoteAddr())
 }
 
 // readPump pumps messages from the websocket connection to the hub.

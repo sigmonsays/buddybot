@@ -45,7 +45,7 @@ type Message struct {
 }
 
 func (m *Message) String() string {
-	return fmt.Sprintf("id:%d op:%s/%d from:%s message:%s",
+	return fmt.Sprintf("cid:%d op:%s/%d from:%s message:%s",
 		m.Id, m.Op, m.Op, m.From, m.Message)
 }
 func (m *Message) Json() []byte {
