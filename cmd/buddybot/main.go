@@ -49,9 +49,11 @@ func main() {
 	opcodes := []buddybot.OpCode{
 		buddybot.RegisterOp,
 		buddybot.UnregisterOp,
-		buddybot.NoticeOp,
-		buddybot.NickOp,
 		buddybot.MessageOp,
+		buddybot.NoticeOp,
+		buddybot.JoinOp,
+		buddybot.NickOp,
+		// buddybot.PingOp,
 	}
 	for _, op := range opcodes {
 		hub.OnCallback(op, handler.handleMessage)

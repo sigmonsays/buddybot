@@ -52,7 +52,16 @@ func (h *Hub) OnCallback(callback OpCode, fn CallbackFn) {
 
 func (h *Hub) setMessageIdentity(c *Connection, m *Message) {
 	m.Id = c.id
-	m.From = h.getIdentity(c)
+
+	// they are allowed to specify the identity with JoinOp
+	if m.Op != JoinOp {
+		m.From = h.getIdentity(c)
+	}
+
+}
+
+func (h *Hub) getIdentity(c *Connection) string {
+	return c.Identity
 }
 
 func (h *Hub) SendTo(c *Connection, m *Message) error {
@@ -121,10 +130,6 @@ func (h *Hub) findConnection(id int64) (*Connection, error) {
 	return nil, fmt.Errorf("not found cid:%d", id)
 }
 
-func (h *Hub) getIdentity(c *Connection) string {
-	return c.Identity
-}
-
 func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
 	callbacks, ok := h.callbacks[op]
 	if ok == false {
@@ -150,7 +155,6 @@ func (h *Hub) Start() {
 		case c := <-h.register:
 			log.Infof("register connection cid:%d remote:%s", c.id, c.ws.RemoteAddr())
 			h.connections[c] = true
-
 			h.dispatch(RegisterOp, c, nil)
 
 		case c := <-h.unregister:
@@ -169,7 +173,7 @@ func (h *Hub) Start() {
 
 			err := m.FromJson(data.data)
 			if err != nil {
-				log.Infof("ERROR: FromJson [ %s ]: %s", data, err)
+				log.Warnf(" FromJson [ %s ]: %s", data, err)
 				continue
 			}
 			h.setMessageIdentity(data.connection, m)
