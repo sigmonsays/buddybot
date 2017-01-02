@@ -116,6 +116,10 @@ func (h *Hub) findConnection(id int64) (*Connection, error) {
 	return nil, fmt.Errorf("not found cid:%d", id)
 }
 
+func (h *Hub) getIdentity(c *Connection) string {
+	return c.Name
+}
+
 func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
 	callbacks, ok := h.callbacks[op]
 	if ok == false {
@@ -163,6 +167,8 @@ func (h *Hub) Start() {
 				log.Infof("ERROR: FromJson [ %s ]: %s", data, err)
 				continue
 			}
+			m.Id = data.connection.id
+			m.From = h.getIdentity(data.connection)
 
 			log.Tracef("dispatch cid=%d op=%s/%d ip=%s data=%s",
 				data.connection.id, m.Op, m.Op, data.connection.ws.RemoteAddr(), string(data.data))
