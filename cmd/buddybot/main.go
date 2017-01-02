@@ -3,7 +3,6 @@ package main
 import (
 	"container/list"
 	"flag"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -33,7 +32,7 @@ func main() {
 
 	srv, err := buddybot.NewHandler(hub)
 	if err != nil {
-		log.Fatal("NewHandler: ", err)
+		log.Errorf("NewHandler: ", err)
 	}
 
 	handler := &chatHandler{
@@ -55,7 +54,7 @@ func main() {
 
 	mx := http.NewServeMux()
 
-	log.Printf("serving static data from %s", staticDir)
+	log.Infof("serving static data from %s", staticDir)
 
 	mx.HandleFunc("/", handler.serveHome)
 	mx.HandleFunc("/ws", srv.ServeWebSocket)
@@ -73,6 +72,6 @@ func main() {
 
 	err = hs.ListenAndServe()
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		log.Errorf("ListenAndServe: ", err)
 	}
 }

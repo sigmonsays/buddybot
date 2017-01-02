@@ -15,7 +15,7 @@ import (
 
 func main() {
 
-	addr := "chat.grepped.org"
+	addr := "localhost"
 	path := "/chat/ws"
 
 	flag.StringVar(&addr, "addr", addr, "address")
@@ -105,6 +105,14 @@ func (me *state) loop() error {
 	err := c.WriteMessage(websocket.TextMessage, j.Json())
 	if err != nil {
 		log.Infof("join: write: %s", err)
+	}
+
+	// see who is online
+	l := me.NewMessage()
+	l.Op = buddybot.ClientListOp
+	err = c.WriteMessage(websocket.TextMessage, l.Json())
+	if err != nil {
+		log.Infof("clientList: write: %s", err)
 	}
 
 	// start a ping loop

@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"path/filepath"
 	"sync"
@@ -19,7 +18,7 @@ type chatHandler struct {
 }
 
 func (h *chatHandler) serveHome(w http.ResponseWriter, r *http.Request) {
-	log.Printf("request %s", r.URL)
+	log.Infof("request %s", r.URL)
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
 		return
@@ -52,7 +51,7 @@ func (h *chatHandler) getHistory() []*buddybot.Message {
 }
 
 func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
-	log.Printf("handleMessage op:%s\n", op)
+	log.Infof("handleMessage op:%s", op)
 
 	if op == buddybot.MessageOp {
 		hub.SendBroadcast(m)
@@ -81,10 +80,13 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 		hub.SendBroadcast(m)
 
 	} else if op == buddybot.ClientListOp {
-		hub.SendClientList(m.Id)
+		err := hub.SendClientList(m.Id)
+		if err != nil {
+			log.Infof("ClientList: %s", err)
+		}
 
 	} else {
-		log.Printf("Unhandled op %+v\n", m)
+		log.Infof("Unhandled op %+v", m)
 	}
 	return nil
 }

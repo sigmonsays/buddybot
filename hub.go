@@ -106,6 +106,8 @@ func (h *Hub) SendClientList(id int64) error {
 		Message: string(message),
 	}
 
+	log.Debugf("sent client list (%d clients) to connection id %d", len(ls.List), id)
+
 	return h.SendTo(destination, msg)
 }
 
