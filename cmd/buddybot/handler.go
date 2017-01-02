@@ -51,7 +51,7 @@ func (h *chatHandler) getHistory() []*buddybot.Message {
 }
 
 func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
-	log.Infof("handleMessage op:%s", op)
+	log.Debugf("handleMessage op:%s msg:%s", op, m)
 
 	if op == buddybot.MessageOp {
 		hub.SendBroadcast(m)

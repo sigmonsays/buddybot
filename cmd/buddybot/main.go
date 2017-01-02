@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 
 	"github.com/sigmonsays/buddybot"
+
+	gologging "github.com/sigmonsays/go-logging"
 )
 
 const (
@@ -20,13 +22,17 @@ func main() {
 
 	gopath := os.Getenv("GOPATH")
 	var staticDir string
+	loglevel := "warn"
 	flag.StringVar(&staticDir, "static", "", "location of static data")
+	flag.StringVar(&loglevel, "log", loglevel, "change log level")
 
 	if staticDir == "" && gopath != "" {
 		staticDir = filepath.Join(gopath, "src/github.com/sigmonsays/buddybot/static")
 	}
 
 	flag.Parse()
+
+	gologging.SetLogLevel(loglevel)
 
 	hub := buddybot.NewHub()
 

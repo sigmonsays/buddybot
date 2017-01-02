@@ -125,7 +125,7 @@ func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
 	if ok == false {
 		return nil
 	}
-	log.Infof("dispatch %s: callbacks:%d", op, len(callbacks))
+	log.Tracef("dispatch %s: callbacks:%d", op, len(callbacks))
 
 	var err error
 	for _, callback := range callbacks {

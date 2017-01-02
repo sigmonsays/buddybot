@@ -11,10 +11,13 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/sigmonsays/buddybot"
+
+	gologging "github.com/sigmonsays/go-logging"
 )
 
 type ConnState int
@@ -30,11 +33,15 @@ func main() {
 	addr := "localhost"
 	path := "/chat/ws"
 	nick := "default"
+	loglevel := "info"
 
 	flag.StringVar(&addr, "addr", addr, "address")
 	flag.StringVar(&path, "path", path, "path")
 	flag.StringVar(&nick, "nick", nick, "nick name")
+	flag.StringVar(&loglevel, "log", loglevel, "log level")
 	flag.Parse()
+
+	gologging.SetLogLevel(loglevel)
 
 	state := &state{
 		addr:      addr,
@@ -190,6 +197,11 @@ func (me *state) ioloop() error {
 
 		case line := <-me.lines:
 
+			line = strings.TrimRight(line, "\n")
+			if len(line) == 0 {
+				continue
+			}
+
 			msg := me.NewMessage()
 			msg.Message = line
 			buf, err := json.Marshal(msg)
@@ -197,7 +209,7 @@ func (me *state) ioloop() error {
 				log.Infof("Marshal: %s", err)
 				continue
 			}
-			log.Infof(">> %s", buf)
+			log.Tracef("sendMessage: %s", msg)
 			me.sendMessage(buf)
 
 		case <-me.interrupt:
@@ -234,7 +246,6 @@ func (me *state) receiveMessage(msg []byte) error {
 }
 
 func (me *state) sendMessage(msg []byte) error {
-	log.Tracef("sendMessage: bytes %s", msg)
 	err := me.c.WriteMessage(websocket.TextMessage, msg)
 	return err
 }
