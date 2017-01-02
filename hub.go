@@ -50,16 +50,6 @@ func (h *Hub) OnCallback(callback OpCode, fn CallbackFn) {
 	h.callbacks[callback] = ls
 }
 
-func (h *Hub) SendMessage(c *Connection, m *Message) error {
-	select {
-	case c.send <- m:
-	default:
-		close(c.send)
-		delete(h.connections, c)
-	}
-	return nil
-}
-
 func (h *Hub) SendTo(c *Connection, m *Message) error {
 	log.Tracef("SendTo conn %s", c)
 	m.Id = c.id
