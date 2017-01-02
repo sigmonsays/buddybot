@@ -10,6 +10,7 @@ type Identity struct {
 	IP       string
 	Hostname string
 	Username string
+	Nick     string
 }
 
 func NewIdentity() *Identity {
@@ -41,5 +42,5 @@ func NewIdentity() *Identity {
 }
 
 func (me *Identity) String() string {
-	return fmt.Sprintf("%s@%s/%s", me.Username, me.Hostname, me.IP)
+	return fmt.Sprintf("%s@%s/%s/%s", me.Username, me.Hostname, me.IP, me.Nick)
 }

@@ -29,9 +29,11 @@ func main() {
 
 	addr := "localhost"
 	path := "/chat/ws"
+	nick := "default"
 
 	flag.StringVar(&addr, "addr", addr, "address")
 	flag.StringVar(&path, "path", path, "path")
+	flag.StringVar(&nick, "nick", nick, "nick name")
 	flag.Parse()
 
 	state := &state{
@@ -40,6 +42,8 @@ func main() {
 		identity:  buddybot.NewIdentity(),
 		connstate: make(chan ConnState, 10),
 	}
+
+	state.identity.Nick = nick
 	log.Infof("Identity %s", state.identity.String())
 
 	// signal to interrupt
