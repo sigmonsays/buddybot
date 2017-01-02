@@ -8,7 +8,8 @@ import (
 
 func NewHandler(hub *Hub) (*Handler, error) {
 	h := &Handler{
-		hub: hub,
+		hub:         hub,
+		connections: 1000,
 	}
 	return h, nil
 
