@@ -139,7 +139,10 @@ func (me *state) ioloop() error {
 				me.connstate <- Disconnected
 				return
 			}
-			me.receiveMessage(message)
+			err = me.receiveMessage(message)
+			if err != nil {
+				log.Warnf("receiveMessage: %s", err)
+			}
 		}
 		log.Tracef("receive loop exited")
 	}()
@@ -234,14 +237,23 @@ func (me *state) ioloop() error {
 }
 
 func (me *state) receiveMessage(msg []byte) error {
-
+	log.Tracef("receiveMessage bytes %s", msg)
 	m := me.NewMessage()
 	err := json.Unmarshal(msg, m)
 	if err != nil {
 		return err
 	}
 
-	log.Tracef("receiveMessage: %s", m)
+	if m.Op == buddybot.JoinOp {
+		log.Infof("JOIN from=%s", m.From)
+
+	} else if m.Op == buddybot.MessageOp {
+		fmt.Printf("MESSAGE <%s> %s\n", m.From, m.Message)
+
+	} else {
+		log.Tracef("receiveMessage: %s", m)
+	}
+
 	return nil
 }
 

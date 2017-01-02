@@ -117,7 +117,7 @@ func (h *Hub) findConnection(id int64) (*Connection, error) {
 }
 
 func (h *Hub) getIdentity(c *Connection) string {
-	return c.Name
+	return c.Identity
 }
 
 func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {

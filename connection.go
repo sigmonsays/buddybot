@@ -31,7 +31,8 @@ type Connection struct {
 	hub *Hub
 	id  int64
 
-	Name string
+	// the identity of connection
+	Identity string
 
 	// The websocket connection.
 	ws *websocket.Conn
@@ -45,7 +46,7 @@ func (c *Connection) GetId() int64 {
 }
 
 func (c *Connection) String() string {
-	return fmt.Sprintf("cid:%d name:%s ip:%s", c.id, c.Name, c.ws.RemoteAddr())
+	return fmt.Sprintf("cid:%d identity:%s ip:%s", c.id, c.Identity, c.ws.RemoteAddr())
 }
 
 // readPump pumps messages from the websocket connection to the hub.

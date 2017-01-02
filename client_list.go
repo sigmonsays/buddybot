@@ -16,7 +16,7 @@ func NewClientList() *ClientList {
 }
 
 func (me *ClientList) AddClient(c *Connection) {
-	me.List[c.id] = c.Name
+	me.List[c.id] = c.Identity
 }
 
 func (me *ClientList) ToJson() []byte {

@@ -63,7 +63,7 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 			hub.SendTo(c, hm)
 		}
 	} else if op == buddybot.UnregisterOp {
-		hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has left", c.Name))
+		hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has left", c.Identity))
 		//} else if m.Op == HistoryOp {
 		//		hub.sendBroadcast(m)
 
@@ -73,18 +73,19 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 			log.Warnf("Join without a name (From not set)")
 			return nil
 		}
-		c.Name = m.From
+
+		c.Identity = m.From
 		log.Infof("connection %d is now known as %q", c.GetId(), m.From)
 		hub.SendBroadcast(m)
 
 	} else if op == buddybot.NickOp {
 
-		if c.Name == "" {
+		if c.Identity == "" {
 			hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has joined", m.From))
 		} else {
-			hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has changed their name to %s", c.Name, m.From))
+			hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has changed their name to %s", c.Identity, m.From))
 		}
-		c.Name = m.From
+		c.Identity = m.From
 
 	} else if op == buddybot.NoticeOp {
 		hub.SendBroadcast(m)
