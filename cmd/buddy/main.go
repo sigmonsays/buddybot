@@ -76,7 +76,7 @@ type state struct {
 
 func (me *state) NewMessage() *buddybot.Message {
 	m := &buddybot.Message{}
-	m.Id = 1
+	m.Id = 0
 	m.Op = buddybot.MessageOp
 	m.From = me.identity.String()
 	return m
@@ -143,14 +143,12 @@ func (me *state) ioloop() error {
 	log.Debugf("join message sent")
 
 	// see who is online
-	/*
-		l := me.NewMessage()
-		l.Op = buddybot.ClientListOp
-		err = c.WriteMessage(websocket.TextMessage, l.Json())
-		if err != nil {
-			log.Infof("clientList: write: %s", err)
-		}
-	*/
+	l := me.NewMessage()
+	l.Op = buddybot.ClientListOp
+	err = c.WriteMessage(websocket.TextMessage, l.Json())
+	if err != nil {
+		log.Infof("clientList: write: %s", err)
+	}
 
 	// start a ping loop
 	go func() {

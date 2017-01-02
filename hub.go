@@ -173,8 +173,10 @@ func (h *Hub) Start() {
 				log.Infof("ERROR: FromJson [ %s ]: %s", data, err)
 				continue
 			}
-			log.Infof("dispatch op=%s/%d data=%s data=%s",
-				m.Op, m.Op, data, string(data.data))
+
+			log.Tracef("dispatch cid=%d op=%s/%d ip=%s data=%s",
+				data.connection.id, m.Op, m.Op, data.connection.ws.RemoteAddr(), string(data.data))
+
 			err = h.dispatch(m.Op, data.connection, m)
 			if err != nil {
 				log.Infof("dispatch %s: %s", m.Op, err)
