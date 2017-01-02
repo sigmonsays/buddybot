@@ -23,47 +23,48 @@ type ExecResult struct {
 	ExitCode int
 	Done     chan error
 
-	errResult chan error
-	Stdout    chan string
-	Stderr    chan string
-	finished  chan bool
+	Stdout   chan string
+	Stderr   chan string
+	finished chan bool
 
 	pending int
 }
 
-func (me *ExecResult) process() {
-
-	go func() {
-		defer func() { me.finished <- true }()
-		err := me.cmd.Wait()
+func (me *ExecResult) wait() error {
+	err := me.cmd.Wait()
+	if err == nil {
+		log.Debugf("Wait returned success")
+	} else {
 		log.Debugf("Wait returned %s", err)
-		me.errResult <- err
-	}()
+	}
+	return err
+}
 
+func (me *ExecResult) process() {
 	var err error
 
 Dance:
 	for {
 		select {
-		case err = <-me.errResult:
-			break Dance
 
 		case <-me.finished:
 			me.pending--
-			log.Debugf("pending=%d", me.pending)
-		}
-		if me.pending == 0 {
-			break Dance
+			log.Debugf("finished: pending=%d", me.pending)
+			if me.pending == 0 {
+				break Dance
+			}
 		}
 	}
 
+	err = me.wait()
+
+	log.Tracef("completly finished: sending Done signal")
 	me.Done <- err
 
 	return
 }
 
 func stream(input io.Reader, out chan string, finished chan bool) {
-	defer func() { finished <- true }()
 
 	bio := bufio.NewReader(input)
 	for {
@@ -78,6 +79,9 @@ func stream(input io.Reader, out chan string, finished chan bool) {
 		log.Tracef("line: (%d) %q", len(line), line)
 		out <- string(line)
 	}
+
+	log.Tracef("stream finished")
+	finished <- true
 }
 
 // handles a exec command from the CLI
@@ -95,13 +99,12 @@ func (me *ShellExec) ExecMessage(args []string) (*ExecResult, error) {
 	}
 
 	res := &ExecResult{
-		cmd:       cmd,
-		errResult: make(chan error, 1),
-		Stdout:    make(chan string, 0),
-		Stderr:    make(chan string, 0),
-		finished:  make(chan bool, 3),
-		pending:   3,
-		Done:      make(chan error, 1),
+		cmd:      cmd,
+		Stdout:   make(chan string, 0),
+		Stderr:   make(chan string, 0),
+		finished: make(chan bool, 3),
+		pending:  2,
+		Done:     make(chan error, 0),
 	}
 
 	stdout, err := cmd.StdoutPipe()

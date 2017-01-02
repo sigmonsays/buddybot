@@ -20,16 +20,25 @@ func (me *handler) execMessage(m *buddybot.Message, ctx *Context, line []string)
 	log.Debugf("execMessage pid=%d", res.Pid)
 
 	var buf string
+	var ok bool
 	msg := ctx.NewMessage()
 
 Dance:
 	for {
 		select {
-		case buf = <-res.Stdout:
+		case buf, ok = <-res.Stdout:
+			if ok == false {
+				res.Stdout = nil
+				continue
+			}
 			msg.Message = "<stdout> " + strings.TrimRight(buf, "\n")
 			ctx.SendTo(m.Id, msg)
 
-		case buf = <-res.Stderr:
+		case buf, ok = <-res.Stderr:
+			if ok == false {
+				res.Stderr = nil
+				continue
+			}
 			msg.Message = "<stderr> " + strings.TrimRight(buf, "\n")
 			ctx.SendTo(m.Id, msg)
 
