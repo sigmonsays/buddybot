@@ -140,11 +140,12 @@ func (me *state) ioloop() error {
 	// send a join message
 	j := me.NewMessage()
 	j.Op = buddybot.JoinOp
+	j.Message = "JOIN EVENT"
 	err = c.WriteMessage(websocket.TextMessage, j.Json())
 	if err != nil {
 		log.Infof("join: write: %s", err)
 	}
-	log.Debugf("join message sent")
+	log.Debugf("join message sent - %s", j)
 
 	// see who is online
 	l := me.NewMessage()
@@ -221,7 +222,6 @@ func (me *state) ioloop() error {
 }
 
 func (me *state) receiveMessage(msg []byte) error {
-	log.Tracef("receiveMessage: bytes %s", msg)
 
 	m := me.NewMessage()
 	err := json.Unmarshal(msg, m)

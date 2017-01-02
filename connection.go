@@ -40,6 +40,10 @@ type Connection struct {
 	send chan *Message
 }
 
+func (c *Connection) GetId() int64 {
+	return c.id
+}
+
 func (c *Connection) String() string {
 	return fmt.Sprintf("cid:%d name:%s ip:%s", c.id, c.Name, c.ws.RemoteAddr())
 }

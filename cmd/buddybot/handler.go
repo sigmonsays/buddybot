@@ -67,6 +67,16 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 		//} else if m.Op == HistoryOp {
 		//		hub.sendBroadcast(m)
 
+	} else if op == buddybot.JoinOp {
+
+		if m.From == "" {
+			log.Warnf("Join without a name (From not set)")
+			return nil
+		}
+		c.Name = m.From
+		log.Infof("connection %d is now known as %q", c.GetId(), m.From)
+		hub.SendBroadcast(m)
+
 	} else if op == buddybot.NickOp {
 
 		if c.Name == "" {
