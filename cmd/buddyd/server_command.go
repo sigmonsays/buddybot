@@ -53,6 +53,12 @@ func (h *chatHandler) handleServerCommand(op buddybot.OpCode, hub *buddybot.Hub,
 
 	} else {
 		log.Warnf("unknown command: cmd=%s", args)
+
+		m := &buddybot.Message{
+			Op:      buddybot.NoticeOp,
+			Message: fmt.Sprintf("No such command: %s", cmd),
+		}
+		hub.SendTo(c, m)
 	}
 
 	return nil
