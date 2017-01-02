@@ -50,9 +50,14 @@ func (h *Hub) OnCallback(callback OpCode, fn CallbackFn) {
 	h.callbacks[callback] = ls
 }
 
+func (h *Hub) setMessageIdentity(c *Connection, m *Message) {
+	m.Id = c.id
+	m.From = h.getIdentity(c)
+}
+
 func (h *Hub) SendTo(c *Connection, m *Message) error {
 	log.Tracef("SendTo conn %s", c)
-	m.Id = c.id
+	h.setMessageIdentity(c, m)
 	select {
 	case c.send <- m:
 	default:
@@ -72,7 +77,7 @@ func (h *Hub) SendBroadcast(m *Message) {
 	err := 0
 	for c := range h.connections {
 		cnt++
-		m.Id = c.id
+		h.setMessageIdentity(c, m)
 		select {
 		case c.send <- m:
 		default:
@@ -131,7 +136,7 @@ func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
 	for _, callback := range callbacks {
 		err = callback(op, h, c, m)
 		if err != nil {
-			log.Infof("callback %s: %s", op, err)
+			log.Warnf("callback op=%s/%d: %s", op, op, err)
 		}
 	}
 
@@ -167,15 +172,14 @@ func (h *Hub) Start() {
 				log.Infof("ERROR: FromJson [ %s ]: %s", data, err)
 				continue
 			}
-			m.Id = data.connection.id
-			m.From = h.getIdentity(data.connection)
+			h.setMessageIdentity(data.connection, m)
 
 			log.Tracef("dispatch cid=%d op=%s/%d ip=%s data=%s",
 				data.connection.id, m.Op, m.Op, data.connection.ws.RemoteAddr(), string(data.data))
 
 			err = h.dispatch(m.Op, data.connection, m)
 			if err != nil {
-				log.Infof("dispatch %s: %s", m.Op, err)
+				log.Warnf("dispatch op=%s/%d: %s", m.Op, m.Op, err)
 			}
 		}
 	}
