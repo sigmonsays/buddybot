@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Chat..</title>
+<title>buddybot</title>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 <script src="/chat/static/linkify.min.js"></script>
 
@@ -173,13 +173,16 @@
                   appendLog($("<div/>").text(prefix + data['message']))
                   showNotification("notice", data['message'])
                } else if ( (data['op'] == MessageOp) || (data['op'] == HistoryOp) ) {
-
                   var d = Date().toLocaleString()
                   prefix = d + " <" + data['from'] + "> "
                   appendLog($("<div/>").html(prefix + formatMessage(data['message'])))
                   if (data['notify'] == true) {
                      showNotification(data['from'], data['message'])
                   }
+               } else {
+                  var d = Date().toLocaleString()
+                  prefix = d + " <" + data['from'] + "> "
+                  appendLog($("<div/>").html(prefix + formatMessage(data['message'])))
                }
         }
     } else {
