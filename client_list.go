@@ -20,6 +20,9 @@ func (me *ClientList) AddClient(c *Connection) {
 }
 
 func (me *ClientList) ToJson() []byte {
-	buf, _ := json.Marshal(me)
+	buf, err := json.Marshal(me)
+	if err != nil {
+		log.Warnf("ToJson: %s", err)
+	}
 	return buf
 }

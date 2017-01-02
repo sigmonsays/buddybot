@@ -29,9 +29,12 @@ const (
 
 	// Client List op sends a list of connected clients to the connection
 	ClientListOp
+
+	// do nothing but print a log line
+	NoOp
 )
 
-var MaxOpCode = ClientListOp
+var MaxOpCode = NoOp
 
 // return a list of all opcodes
 func OpCodes() []OpCode {

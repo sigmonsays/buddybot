@@ -251,10 +251,13 @@ func (me *state) receiveMessage(msg []byte) error {
 	}
 
 	if m.Op == buddybot.JoinOp {
-		log.Infof("JOIN from=%s", m.From)
+		log.Infof("JOIN from=%s id=%d", m.From, m.Id)
 
 	} else if m.Op == buddybot.MessageOp {
 		fmt.Printf("MESSAGE <%s> %s\n", m.From, m.Message)
+
+	} else if m.Op == buddybot.ClientListOp {
+		fmt.Printf("CLIENT_LIST <%s> %s\n", m.From, m.Message)
 
 	} else {
 		log.Tracef("receiveMessage: %s", m)

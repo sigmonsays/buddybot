@@ -4,9 +4,9 @@ package buddybot
 
 import "fmt"
 
-const _OpCode_name = "InvalidOpRegisterOpUnregisterOpMessageOpNoticeOpJoinOpNickOpPingOpClientListOp"
+const _OpCode_name = "InvalidOpRegisterOpUnregisterOpMessageOpNoticeOpJoinOpNickOpPingOpSendClientListOpNoOp"
 
-var _OpCode_index = [...]uint8{0, 9, 19, 31, 40, 48, 54, 60, 66, 78}
+var _OpCode_index = [...]uint8{0, 9, 19, 31, 40, 48, 54, 60, 66, 82, 86}
 
 func (i OpCode) String() string {
 	if i < 0 || i >= OpCode(len(_OpCode_index)-1) {

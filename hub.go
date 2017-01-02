@@ -112,7 +112,7 @@ func (h *Hub) SendClientList(id int64) error {
 	message := ls.ToJson()
 
 	msg := &Message{
-		Op:      MessageOp,
+		Op:      ClientListOp,
 		Message: string(message),
 	}
 
