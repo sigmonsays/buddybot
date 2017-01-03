@@ -7,5 +7,5 @@ import (
 var log gologging.Logger
 
 func init() {
-	log = gologging.Register("buddybot", func(newlog gologging.Logger) { log = newlog })
+	log = gologging.Register("buddyd", func(newlog gologging.Logger) { log = newlog })
 }
