@@ -76,6 +76,9 @@
     }
 
     function formatMessage(msg) {
+      if (!msg) {
+         return msg
+      }
       var links = linkify.find(msg)
       for(i=0; i<links.length; i++) {
          msg = msg.replace(links[i].href, "<a target='_blank' href='" + links[i].href + "'>" + links[i].href + "</a>")
@@ -172,7 +175,7 @@
                   prefix = " :notice: "
                   appendLog($("<div/>").text(prefix + data['message']))
                   showNotification("notice", data['message'])
-               } else if ( (data['op'] == MessageOp) || (data['op'] == HistoryOp) ) {
+               } else if ( (data['op'] == MessageOp) ) {
                   var d = Date().toLocaleString()
                   prefix = d + " <" + data['from'] + "> "
                   appendLog($("<div/>").html(prefix + formatMessage(data['message'])))

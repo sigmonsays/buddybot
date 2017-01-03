@@ -58,12 +58,6 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 
 	} else if op == buddybot.RegisterOp {
 
-		// play back history
-		for _, hm := range h.getHistory() {
-			hm.Op = HistoryOp
-			hub.SendTo(c, hm)
-		}
-
 	} else if op == buddybot.UnregisterOp {
 		hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has left", c.Identity))
 		//} else if m.Op == HistoryOp {
@@ -90,7 +84,6 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 		c.Identity = m.From
 
 	} else if op == buddybot.PingOp {
-		// whatever..
 
 	} else if op == buddybot.NoticeOp {
 		hub.SendBroadcast(m)
