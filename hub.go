@@ -3,6 +3,8 @@ package buddybot
 import (
 	"fmt"
 	"sync"
+
+	gologging "github.com/sigmonsays/go-logging"
 )
 
 // a low level message
@@ -20,6 +22,7 @@ type CallbackFn func(op OpCode, hub *Hub, c *Connection, m *Message) error
 // hub maintains the set of active connections and broadcasts messages to the
 // connections.
 type Hub struct {
+	verbose     bool
 	connections map[*Connection]bool
 	broadcast   chan *message
 	register    chan *Connection
@@ -27,18 +30,30 @@ type Hub struct {
 	mx          sync.Mutex
 
 	callbacks map[OpCode][]CallbackFn
+	log       gologging.Logger
 }
 
 func NewHub() *Hub {
 	callbacks := make(map[OpCode][]CallbackFn, 0)
+	l := gologging.NewStd2Logger3("warn", "buddybot.hub")
 	h := &Hub{
 		broadcast:   make(chan *message, 50),
 		register:    make(chan *Connection),
 		unregister:  make(chan *Connection),
 		connections: make(map[*Connection]bool),
 		callbacks:   callbacks,
+		log:         l,
 	}
+
 	return h
+}
+
+func (h *Hub) SetLogger(l gologging.Logger) {
+	h.log = l
+}
+
+func (h *Hub) SetVerbose(verbose bool) {
+	h.verbose = verbose
 }
 
 func (h *Hub) OnCallback(callback OpCode, fn CallbackFn) {
@@ -65,7 +80,7 @@ func (h *Hub) getIdentity(c *Connection) string {
 }
 
 func (h *Hub) SendTo(c *Connection, m *Message) error {
-	log.Tracef("SendTo conn %s", c)
+	h.log.Tracef("SendTo conn %s", c)
 	h.setMessageIdentity(c, m)
 	select {
 	case c.send <- m:
@@ -87,6 +102,7 @@ func (h *Hub) SendBroadcast(m *Message) {
 	for c := range h.connections {
 		cnt++
 		h.setMessageIdentity(c, m)
+		h.log.Tracef("send client(%s) msg(%+v)", c, m)
 		select {
 		case c.send <- m:
 		default:
@@ -95,7 +111,7 @@ func (h *Hub) SendBroadcast(m *Message) {
 			delete(h.connections, c)
 		}
 	}
-	log.Tracef("SendBroadcast num-clients=%d (failures %d)", cnt, err)
+	h.log.Tracef("SendBroadcast num-clients=%d (failures %d)", cnt, err)
 }
 
 func (h *Hub) SendClientList(id int64) error {
@@ -116,7 +132,7 @@ func (h *Hub) SendClientList(id int64) error {
 		Message: string(message),
 	}
 
-	log.Debugf("sent client list (%d clients) to connection id %d", len(ls.List), id)
+	h.log.Debugf("sent client list (%d clients) to connection id %d", len(ls.List), id)
 
 	return h.SendTo(destination, msg)
 }
@@ -135,13 +151,13 @@ func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
 	if ok == false {
 		return nil
 	}
-	log.Tracef("dispatch %s: callbacks:%d", op, len(callbacks))
+	h.log.Tracef("dispatch %s/%d callbacks:%d", op, op, len(callbacks))
 
 	var err error
 	for _, callback := range callbacks {
 		err = callback(op, h, c, m)
 		if err != nil {
-			log.Warnf("callback op=%s/%d: %s", op, op, err)
+			h.log.Warnf("callback op=%s/%d: %s", op, op, err)
 		}
 	}
 
@@ -149,16 +165,16 @@ func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
 }
 
 func (h *Hub) Start() {
-	log.Debugf("start")
+	h.log.Debugf("start")
 	for {
 		select {
 		case c := <-h.register:
-			log.Infof("register connection cid:%d remote:%s", c.id, c.ws.RemoteAddr())
+			h.log.Infof("register connection cid:%d remote:%s", c.id, c.ws.RemoteAddr())
 			h.connections[c] = true
 			h.dispatch(RegisterOp, c, nil)
 
 		case c := <-h.unregister:
-			log.Infof("unregister connection cid:%d remote:%s", c.id, c.ws.RemoteAddr())
+			h.log.Infof("unregister connection cid:%d remote:%s", c.id, c.ws.RemoteAddr())
 			if _, ok := h.connections[c]; ok {
 				delete(h.connections, c)
 				close(c.send)
@@ -173,17 +189,19 @@ func (h *Hub) Start() {
 
 			err := m.FromJson(data.data)
 			if err != nil {
-				log.Warnf(" FromJson [ %s ]: %s", data, err)
+				h.log.Warnf(" FromJson [ %s ]: %s", data, err)
 				continue
 			}
 			h.setMessageIdentity(data.connection, m)
 
-			log.Tracef("dispatch cid=%d op=%s/%d ip=%s data=%s",
-				data.connection.id, m.Op, m.Op, data.connection.ws.RemoteAddr(), string(data.data))
+			if h.verbose {
+				h.log.Tracef("dispatch cid=%d op=%s/%d ip=%s data=%s",
+					data.connection.id, m.Op, m.Op, data.connection.ws.RemoteAddr(), string(data.data))
+			}
 
 			err = h.dispatch(m.Op, data.connection, m)
 			if err != nil {
-				log.Warnf("dispatch op=%s/%d: %s", m.Op, m.Op, err)
+				h.log.Warnf("dispatch op=%s/%d: %s", m.Op, m.Op, err)
 			}
 		}
 	}
