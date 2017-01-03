@@ -6,10 +6,12 @@ import (
 	"sync/atomic"
 )
 
+var startingConnectionCounter int64 = 0
+
 func NewHandler(hub *Hub) (*Handler, error) {
 	h := &Handler{
 		hub:         hub,
-		connections: 1000,
+		connections: startingConnectionCounter,
 	}
 	return h, nil
 

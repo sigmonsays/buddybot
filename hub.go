@@ -66,16 +66,22 @@ func (h *Hub) OnCallback(callback OpCode, fn CallbackFn) {
 }
 
 func (h *Hub) setMessageIdentity(c *Connection, m *Message) {
-	m.Id = c.id
+	if m.Id == 0 {
+		m.Id = c.id
+	}
 
 	// they are allowed to specify the identity with JoinOp
 	if m.Op != JoinOp {
-		m.From = h.getIdentity(c)
+		m.From = h.getIdentity(m.Id)
 	}
 
 }
 
-func (h *Hub) getIdentity(c *Connection) string {
+func (h *Hub) getIdentity(id int64) string {
+	c, err := h.findConnection(id)
+	if err != nil {
+		return fmt.Sprintf("no-id=%d", id)
+	}
 	return c.Identity
 }
 

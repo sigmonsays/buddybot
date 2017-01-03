@@ -52,17 +52,14 @@ func (h *chatHandler) getHistory() []*buddybot.Message {
 
 func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
 
-	log.Debugf("handleMessage op:%s msg:%s", op, m)
-
 	if op == buddybot.MessageOp {
+		log.Debugf("handleMessage op:%s/%d msg:%s", op, op, m)
 		hub.SendBroadcast(m)
 
 	} else if op == buddybot.RegisterOp {
 
 	} else if op == buddybot.UnregisterOp {
 		hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has left", c.Identity))
-		//} else if m.Op == HistoryOp {
-		//		hub.sendBroadcast(m)
 
 	} else if op == buddybot.JoinOp {
 
