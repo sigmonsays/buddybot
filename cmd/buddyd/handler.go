@@ -96,14 +96,12 @@ func (h *chatHandler) handleRegisterOp(op buddybot.OpCode, hub *buddybot.Hub, c 
 	return nil
 }
 
-func (h *chatHandler) handleJoinOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
 	if m.From == "" {
-		log.Warnf("Join without a name (From not set)")
-		return nil
+		return fmt.Errorf("Join without a name (From not set)")
 	}
 
 	c.Identity = m.From
-
 	id, err := buddybot.ParseIdentity(m.Message)
 	if err == nil {
 		log.Infof("connection %d is now known as %v", c.GetId(), id)
@@ -114,6 +112,12 @@ func (h *chatHandler) handleJoinOp(op buddybot.OpCode, hub *buddybot.Hub, c *bud
 		}
 		hub.SendTo(c, m)
 	}
+	return nil
+}
+
+func (h *chatHandler) handleJoinOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+
+	h.setConnectionIdentity(op, hub, c, m)
 
 	// send out a broadcast so each client knows
 	log.Infof("connection %d is now known as %q", c.GetId(), m.From)
@@ -128,6 +132,7 @@ func (h *chatHandler) handleNickOp(op buddybot.OpCode, hub *buddybot.Hub, c *bud
 		hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has changed their name to %s", c.Identity, m.From))
 	}
 	c.Identity = m.From
+	h.setConnectionIdentity(op, hub, c, m)
 	return nil
 }
 
