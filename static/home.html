@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>buddybot - revision 54</title>
+<title>buddybot - revision 55</title>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 <script src="/chat/static/linkify.min.js"></script>
 
@@ -16,6 +16,21 @@
    var JoinOp = 5
    var NickOp = 6
    var PingOp = 7
+
+   var entityMap = {
+     "&": "&amp;",
+     "<": "&lt;",
+     ">": "&gt;",
+     '"': '&quot;',
+     "'": '&#39;',
+     "/": '&#x2F;'
+   };
+
+   function escapeHtml(string) {
+     return String(string).replace(/[&<>"'\/]/g, function (s) {
+       return entityMap[s];
+     });
+   }
 
    function requestNotifyPermission() {
       Notification.requestPermission(function (permission) {
@@ -77,13 +92,13 @@
 
     function formatMessage(msg) {
       if (!msg) {
-         return msg
+         return escapeHtml(msg)
       }
       var links = linkify.find(msg)
       for(i=0; i<links.length; i++) {
          msg = msg.replace(links[i].href, "<a target='_blank' href='" + links[i].href + "'>" + links[i].href + "</a>")
       }
-      return msg
+      return escapeHtml(msg)
     }
 
     var username = getCookie("username")
@@ -175,17 +190,19 @@
                   prefix = " :notice: "
                   appendLog($("<div/>").text(prefix + data['message']))
                   showNotification("notice", data['message'])
+
                } else if ( (data['op'] == MessageOp) ) {
                   var d = Date().toLocaleString()
                   prefix = d + " <" + data['from'] + "> "
-                  appendLog($("<div/>").html(prefix + formatMessage(data['message'])))
+                  appendLog($("<div/>").html(formatMessage(prefix+data['message'])))
                   if (data['notify'] == true) {
                      showNotification(data['from'], data['message'])
                   }
+
                } else {
                   var d = Date().toLocaleString()
                   prefix = d + " <" + data['from'] + "> "
-                  appendLog($("<div/>").html(prefix + formatMessage(data['message'])))
+                  appendLog($("<div/>").html(formatMessage(prefix+data['message'])))
                }
         }
     } else {
