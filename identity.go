@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"strings"
 )
 
 type Identity struct {
@@ -11,6 +12,29 @@ type Identity struct {
 	Hostname string
 	Username string
 	Nick     string
+}
+
+func ParseIdentity(identity string) (*Identity, error) {
+	i := NewIdentity()
+
+	tmp1 := strings.Split(identity, "@") // username @ host / ip / nick
+	if len(i.Username) > 0 {
+		i.Username = tmp1[0]
+	}
+	if len(tmp1) > 1 {
+		tmp2 := strings.Split(tmp1[1], "/") // host / ip / nick
+		if len(tmp2) > 0 {
+			i.Hostname = tmp2[0]
+		}
+		if len(tmp2) > 1 {
+			i.IP = tmp2[1]
+		}
+		if len(tmp2) > 2 {
+			i.Nick = tmp2[2]
+		}
+	}
+
+	return i, nil
 }
 
 func NewIdentity() *Identity {

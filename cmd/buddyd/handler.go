@@ -103,6 +103,19 @@ func (h *chatHandler) handleJoinOp(op buddybot.OpCode, hub *buddybot.Hub, c *bud
 	}
 
 	c.Identity = m.From
+
+	id, err := buddybot.ParseIdentity(m.Message)
+	if err == nil {
+		log.Infof("connection %d is now known as %v", c.GetId(), id)
+	} else {
+		m := &buddybot.Message{
+			Op:      buddybot.NoticeOp,
+			Message: "You provided a bad identity: " + err.Error(),
+		}
+		hub.SendTo(c, m)
+	}
+
+	// send out a broadcast so each client knows
 	log.Infof("connection %d is now known as %q", c.GetId(), m.From)
 	hub.SendBroadcast(m)
 	return nil
