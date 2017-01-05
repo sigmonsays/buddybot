@@ -18,7 +18,7 @@ func ParseIdentity(identity string) (*Identity, error) {
 	i := NewIdentity()
 
 	tmp1 := strings.Split(identity, "@") // username @ host / ip / nick
-	if len(i.Username) > 0 {
+	if len(tmp1) > 0 {
 		i.Username = tmp1[0]
 	}
 	if len(tmp1) > 1 {
