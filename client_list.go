@@ -1,6 +1,7 @@
 package buddybot
 
 import (
+	"bytes"
 	"encoding/json"
 )
 
@@ -33,4 +34,9 @@ func (me *ClientList) ToJson() []byte {
 		log.Warnf("ToJson: %s", err)
 	}
 	return buf
+}
+func (me *ClientList) FromJsonString(buf string) error {
+	bin := bytes.NewBufferString(buf).Bytes()
+	err := json.Unmarshal(bin, &me.List)
+	return err
 }

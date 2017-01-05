@@ -260,8 +260,17 @@ func (me *state) receiveMessage(msg []byte) error {
 		me.handler.OnMessage(m, me.context)
 
 	} else if m.Op == buddybot.ClientListOp {
-		fmt.Printf("CLIENT_LIST <%s> %s\n", m.From, m.Message)
 		// me.handler.OnClientList(m)
+
+		cl := buddybot.NewClientList()
+		err = cl.FromJsonString(m.Message)
+		if err != nil {
+			log.Warnf("ClientList: %s", err)
+			return nil
+		}
+		for _, c := range cl.List {
+			fmt.Printf("client cid=%d %s\n", c.Id, c.Identity)
+		}
 
 	} else {
 		log.Tracef("receiveMessage: %s", m)

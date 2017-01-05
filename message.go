@@ -10,10 +10,18 @@ import (
 
 type Message struct {
 	connection *Connection
-	Id         int64  `json:"id"`
-	Op         OpCode `json:"op"`
-	From       string `json:"from,omitempty"`
-	Message    string `json:"message,omitempty"`
+
+	// connection id
+	Id int64 `json:"id"`
+
+	// type of message
+	Op OpCode `json:"op"`
+
+	// to and from addresses
+	To   string `json:"to,omitempty"`
+	From string `json:"from,omitempty"`
+
+	Message string `json:"message,omitempty"`
 
 	// uniquely identify the message
 	Tag string `json:"tag,omitempty"`
