@@ -1,8 +1,11 @@
 package buddybot
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type Message struct {
@@ -11,6 +14,16 @@ type Message struct {
 	Op         OpCode `json:"op"`
 	From       string `json:"from,omitempty"`
 	Message    string `json:"message,omitempty"`
+
+	// uniquely identify the message
+	Tag string `json:"tag,omitempty"`
+}
+
+// set a new tag on the message
+func (m *Message) GenerateTag() {
+	uu := uuid.New()
+	hx := hex.EncodeToString(uu[:])
+	m.Tag = hx
 }
 
 func (m *Message) String() string {

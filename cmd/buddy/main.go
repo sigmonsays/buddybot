@@ -47,7 +47,9 @@ func main() {
 
 	identity := buddybot.NewIdentity()
 	handler := NewHandler(identity)
-	context := &Context{}
+	context := &Context{
+		Identity: identity,
+	}
 	state := &state{
 		addr:      addr,
 		path:      path,
@@ -94,14 +96,6 @@ type state struct {
 	c       *websocket.Conn
 	handler *handler
 	context *Context
-}
-
-func (me *state) NewMessage() *buddybot.Message {
-	m := &buddybot.Message{}
-	m.Id = 0
-	m.Op = buddybot.MessageOp
-	m.From = me.identity.String()
-	return m
 }
 
 func (me *state) loop() error {
@@ -160,7 +154,7 @@ func (me *state) ioloop() error {
 	}()
 
 	// send a join message
-	j := me.NewMessage()
+	j := me.context.NewMessage()
 	j.Op = buddybot.JoinOp
 	j.Message = "JOIN EVENT"
 	err = c.WriteMessage(websocket.TextMessage, j.Json())
@@ -170,7 +164,7 @@ func (me *state) ioloop() error {
 	log.Debugf("join message sent - %s", j)
 
 	// see who is online
-	l := me.NewMessage()
+	l := me.context.NewMessage()
 	l.Op = buddybot.ClientListOp
 	err = c.WriteMessage(websocket.TextMessage, l.Json())
 	if err != nil {
@@ -187,7 +181,7 @@ func (me *state) ioloop() error {
 		for {
 			select {
 			case <-t.C:
-				p := me.NewMessage()
+				p := me.context.NewMessage()
 				p.Op = buddybot.PingOp
 				err := c.WriteMessage(websocket.TextMessage, p.Json())
 				if err != nil {
@@ -217,7 +211,7 @@ func (me *state) ioloop() error {
 				continue
 			}
 
-			msg := me.NewMessage()
+			msg := me.context.NewMessage()
 			msg.Message = line
 			buf, err := json.Marshal(msg)
 			if err != nil {
@@ -252,7 +246,7 @@ func (me *state) receiveMessage(msg []byte) error {
 	if me.verbose {
 		log.Tracef("receiveMessage bytes %s", msg)
 	}
-	m := me.NewMessage()
+	m := me.context.NewMessage()
 	err := json.Unmarshal(msg, m)
 	if err != nil {
 		return err
@@ -263,7 +257,6 @@ func (me *state) receiveMessage(msg []byte) error {
 		// me.handler.OnJoin(m)
 
 	} else if m.Op == buddybot.MessageOp {
-		fmt.Printf("MESSAGE <%s> %s\n", m.From, m.Message)
 		me.handler.OnMessage(m, me.context)
 
 	} else if m.Op == buddybot.ClientListOp {
