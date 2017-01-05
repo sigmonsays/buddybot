@@ -171,30 +171,6 @@ func (me *state) ioloop() error {
 		log.Infof("clientList: write: %s", err)
 	}
 
-	// start a ping loop
-	go func() {
-		log.Debugf("ping loop started")
-		d := time.Duration(10) * time.Second
-		t := time.NewTicker(d)
-		defer t.Stop()
-	Loop:
-		for {
-			select {
-			case <-t.C:
-				p := me.context.NewMessage()
-				p.Op = buddybot.PingOp
-				err := c.WriteMessage(websocket.TextMessage, p.Json())
-				if err != nil {
-					log.Infof("ping: write: %s", err)
-					me.connstate <- Disconnected
-					break Loop
-				}
-			}
-			me.connstate <- Connected
-		}
-		log.Debugf("ping loop exited")
-	}()
-
 	// just wait on interrupt
 	for {
 		select {
