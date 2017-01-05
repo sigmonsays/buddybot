@@ -45,12 +45,17 @@ func main() {
 
 	gologging.SetLogLevel(loglevel)
 
+	identity := buddybot.NewIdentity()
+	handler := NewHandler(identity)
+	context := &Context{}
 	state := &state{
 		addr:      addr,
 		path:      path,
-		identity:  buddybot.NewIdentity(),
+		identity:  identity,
 		connstate: make(chan ConnState, 10),
 		verbose:   verbose,
+		handler:   handler,
+		context:   context,
 	}
 
 	state.identity.Nick = nick
@@ -86,7 +91,9 @@ type state struct {
 	connstate chan ConnState
 	lines     chan string
 
-	c *websocket.Conn
+	c       *websocket.Conn
+	handler *handler
+	context *Context
 }
 
 func (me *state) NewMessage() *buddybot.Message {
@@ -125,6 +132,7 @@ func (me *state) ioloop() error {
 		return err
 	}
 
+	me.context.Conn = c
 	me.c = c
 
 	log.Infof("Connecton established")
@@ -252,12 +260,15 @@ func (me *state) receiveMessage(msg []byte) error {
 
 	if m.Op == buddybot.JoinOp {
 		log.Infof("JOIN from=%s cid=%d", m.From, m.Id)
+		// me.handler.OnJoin(m)
 
 	} else if m.Op == buddybot.MessageOp {
 		fmt.Printf("MESSAGE <%s> %s\n", m.From, m.Message)
+		me.handler.OnMessage(m, me.context)
 
 	} else if m.Op == buddybot.ClientListOp {
 		fmt.Printf("CLIENT_LIST <%s> %s\n", m.From, m.Message)
+		// me.handler.OnClientList(m)
 
 	} else {
 		log.Tracef("receiveMessage: %s", m)
