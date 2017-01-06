@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/facebookgo/devrestarter"
 	"github.com/gorilla/websocket"
 	"github.com/sigmonsays/buddybot"
 
@@ -64,6 +65,17 @@ func main() {
 
 	if verbose {
 		conf.PrintYaml()
+	}
+
+	if conf.GitWatch {
+
+		gopath := os.Getenv("GOPATH")
+		if gopath == "" {
+			StartupError("GOPATH must be set for git_watch to work")
+		}
+
+		devrestarter.Init()
+		go GitWatch(conf)
 	}
 
 	identity := buddybot.NewIdentity()

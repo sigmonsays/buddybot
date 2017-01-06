@@ -15,6 +15,7 @@ var defaultConfig = `
 log_level: warn
 reconnect_delay: 10s
 server_address: "localhost:8081"
+git_watch: true
 
 # end default built it configuration
 `
@@ -25,6 +26,8 @@ type BuddyConfig struct {
 	Nick           string
 	ServerAddress  string        `yaml:"server_address"`
 	ReconnectDelay time.Duration `yaml:"reconnect_delay"`
+
+	GitWatch bool `yaml:"git_watch"`
 }
 
 func (c *BuddyConfig) LoadDefault() {
