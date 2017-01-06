@@ -39,11 +39,11 @@ type chatHandler struct {
 }
 
 func (h *chatHandler) serveHome(w http.ResponseWriter, r *http.Request) {
-	log.Infof("request %s", r.URL)
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
 		return
 	}
+	log.Infof("request %s %s", r.Method, r.URL)
 	home_html := filepath.Join(h.staticDir, "home.html")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	homeTempl := template.Must(template.ParseFiles(home_html))
