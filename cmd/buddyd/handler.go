@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/sigmonsays/buddybot"
@@ -50,7 +51,16 @@ func (h *chatHandler) getHistory() []*buddybot.Message {
 	return ret
 }
 
+// entry point for message handling
+// handleMessage will call handle{Operation}Op for the appropriate buddybot.OpCode
+// if a message starts with "/" is is dispatched to handleServerCommand
+
 func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	if strings.HasPrefix(m.Message, "/") {
+		return h.handleServerCommand(op, hub, c, m)
+	}
+
+	// dispatch appropriate operation
 	if op == buddybot.MessageOp {
 		h.handleMessageOp(op, hub, c, m)
 
@@ -82,7 +92,7 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 }
 
 func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
-	log.Debugf("handleMessage op:%s/%d msg:%s", op, op, m)
+	log.Debugf("handleMessage %s/%d msg:%s", op, op, m)
 	hub.SendBroadcast(m)
 	return nil
 }
@@ -150,5 +160,11 @@ func (h *chatHandler) handleClientListOp(op buddybot.OpCode, hub *buddybot.Hub, 
 	if err != nil {
 		log.Infof("ClientList: %s", err)
 	}
+	return nil
+}
+
+func (h *chatHandler) handleServerCommand(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	log.Debugf("handleServerCommand %s/%d msg:%s", op, op, m)
+
 	return nil
 }
