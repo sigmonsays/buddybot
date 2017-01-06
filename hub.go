@@ -69,9 +69,11 @@ func (h *Hub) setMessageIdentity(c *Connection, m *Message) {
 	}
 
 	// they are allowed to specify the identity with JoinOp
-	if m.Op != JoinOp {
-		m.From = h.getIdentity(m.Id)
-	}
+	/*
+		if m.Op != JoinOp {
+			m.From = h.getIdentity(m.Id)
+		}
+	*/
 
 }
 

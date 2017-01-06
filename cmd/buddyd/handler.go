@@ -164,6 +164,7 @@ func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *
 		sconn, err = h.findNick(m.From)
 		if err == nil {
 			m.IdFrom = sconn.GetId()
+			log.Tracef("set message From=%s: connection id=%d", m.From, m.IdFrom)
 		} else {
 			log.Warnf("findNick from=%s: %s", m.From, err)
 		}
@@ -173,6 +174,7 @@ func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *
 		dconn, err = h.findNick(m.To)
 		if err == nil {
 			m.IdTo = dconn.GetId()
+			log.Tracef("set message To=%s: connection id=%d", m.To, m.IdTo)
 		} else {
 			log.Warnf("findNick to=%s: %s", m.To, err)
 		}
