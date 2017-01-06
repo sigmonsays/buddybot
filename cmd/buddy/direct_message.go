@@ -13,12 +13,19 @@ import (
 func (me *handler) DirectMessage(m *buddybot.Message, ctx *Context) error {
 	log.Debugf("direct message %s", m)
 
+	var mention string
 	line := m.Message
 	if strings.HasPrefix(m.Message, "@") {
 		offset := strings.Index(m.Message, " ")
 		if offset > 0 {
 			line = m.Message[offset:]
 		}
+		mention = m.Message[1:offset]
+	}
+
+	if mention != me.identity.Nick {
+		log.Debugf("not for me (@ mention %s)", mention)
+		return nil
 	}
 
 	cline, err := ParseCommandLine(line)
