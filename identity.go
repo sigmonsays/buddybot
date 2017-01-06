@@ -17,10 +17,21 @@ type Identity struct {
 func ParseIdentity(identity string) (*Identity, error) {
 	i := NewIdentity()
 
+	if identity == "" {
+		return nil, fmt.Errorf("empty identity")
+	}
+
+	// just allow usernames tp be used without following the identity format
+	if strings.Contains(identity, "@") == false {
+		i.Nick = identity
+		return i, nil
+	}
+
 	tmp1 := strings.Split(identity, "@") // username @ host / ip / nick
 	if len(tmp1) > 0 {
 		i.Username = tmp1[0]
 	}
+
 	if len(tmp1) > 1 {
 		tmp2 := strings.Split(tmp1[1], "/") // host / ip / nick
 		if len(tmp2) > 0 {
