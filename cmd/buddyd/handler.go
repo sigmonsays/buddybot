@@ -135,9 +135,10 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 	}
 
 	c.Identity = m.From
-	id, err := buddybot.ParseIdentity(m.Message)
+	id, err := buddybot.ParseIdentity(m.From)
 	if err == nil {
-		log.Infof("connection %d is now known as %v", c.GetId(), id)
+		log.Infof("connection %d is now known as %v (nick %s)", c.GetId(), id, id.Nick)
+
 	} else {
 		m := &buddybot.Message{
 			Op:      buddybot.NoticeOp,
@@ -151,10 +152,12 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 
 func (h *chatHandler) handleJoinOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
 
-	h.setConnectionIdentity(op, hub, c, m)
+	_, err := h.setConnectionIdentity(op, hub, c, m)
+	if err != nil {
+		log.Warnf("JoinOp: setConnectionIdentity cid:%d: %s", c.GetId(), err)
+	}
 
 	// send out a broadcast so each client knows
-	log.Infof("connection %d is now known as %q", c.GetId(), m.From)
 	hub.SendBroadcast(m)
 	return nil
 }
@@ -169,7 +172,7 @@ func (h *chatHandler) handleNickOp(op buddybot.OpCode, hub *buddybot.Hub, c *bud
 
 	id, err := h.setConnectionIdentity(op, hub, c, m)
 	if err != nil {
-		log.Warnf("setConnectionIdentity cid:%d: %s", c.GetId(), err)
+		log.Warnf("NickOp: setConnectionIdentity cid:%d: %s", c.GetId(), err)
 	}
 
 	// store the nickname
