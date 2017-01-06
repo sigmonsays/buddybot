@@ -54,7 +54,7 @@ func (h *chatHandler) findNick(name string) (*buddybot.Connection, error) {
 
 	cid, ok := h.nicknames[name]
 	if ok == false {
-		return nil, fmt.Errorf("not found: %s", name)
+		return nil, fmt.Errorf("nick not found: %s", name)
 	}
 
 	c, err := h.hub.FindConnection(cid)
