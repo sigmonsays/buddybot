@@ -281,6 +281,9 @@ func (me *state) receiveMessage(msg []byte) error {
 	} else if m.Op == buddybot.MessageOp {
 		me.handler.OnMessage(m, me.context)
 
+	} else if m.Op == buddybot.NoticeOp {
+		me.handler.OnNotice(m, me.context)
+
 	} else if m.Op == buddybot.ClientListOp {
 		// me.handler.OnClientList(m)
 
