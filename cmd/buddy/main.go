@@ -59,6 +59,7 @@ func main() {
 	// generate a nick if its empty
 	if conf.Nick == "" {
 		conf.Nick = fmt.Sprintf("user-%d", time.Now().Unix())
+		log.Warnf("nick name not set, using generated %s", conf.Nick)
 	}
 
 	gologging.SetLogLevel(conf.LogLevel)
