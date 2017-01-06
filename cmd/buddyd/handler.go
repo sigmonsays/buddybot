@@ -151,6 +151,12 @@ func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *
 }
 
 func (h *chatHandler) handleUnregisterOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	id, err := buddybot.ParseIdentity(m.From)
+	if err == nil {
+		log.Infof("connection %d is finished (nick %s)", c.GetId(), id, id.Nick)
+		delete(h.nicknames, id.Nick)
+	}
+
 	return nil
 }
 
