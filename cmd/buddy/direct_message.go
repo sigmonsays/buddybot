@@ -21,12 +21,17 @@ func (me *handler) DirectMessage(m *buddybot.Message, ctx *Context) error {
 			line = m.Message[offset:]
 		}
 		mention = m.Message[1:offset]
-		m.From = mention
 	}
 
-	if mention != me.identity.Nick {
+	m.From = mention
+
+	if mention != "all" && mention != me.identity.Nick {
 		log.Debugf("not for me (@ mention %s)", mention)
 		return nil
+	}
+
+	if mention == "all" {
+		m.From = ""
 	}
 
 	cline, err := ParseCommandLine(line)
