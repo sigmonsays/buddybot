@@ -33,7 +33,11 @@ func GitWatch(conf *BuddyConfig) {
 	}
 
 	gw.OnChange = upgrader.OnChange
+	gw.OnCheck = upgrader.OnCheck
 
+}
+func (me *upgrader) OnCheck(dir, branch, lhash, rhash string) error {
+	return nil
 }
 
 func (me *upgrader) OnChange(dir, branch, lhash, rhash string) error {
@@ -69,6 +73,7 @@ func (me *upgrader) OnChange(dir, branch, lhash, rhash string) error {
 
 	return nil
 }
+
 func (me *upgrader) GetVersion() (string, error) {
 	cmdline := []string{"git", "describe", "--tags"}
 	out, err := exec.Command(cmdline[0], cmdline[1:]...).Output()
