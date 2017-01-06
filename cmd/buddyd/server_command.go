@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/sigmonsays/buddybot"
@@ -8,25 +9,51 @@ import (
 	"github.com/mattn/go-shellwords"
 )
 
-func (h *chatHandler) handleServerCommand(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
-	log.Debugf("handleServerCommand %s/%d msg:%s", op, op, m)
-
+func parseCommand(line string) ([]string, error) {
 	var cmdline string
 	var args []string
-
-	tmp := strings.Split(m.Message, "/")
-	if len(tmp) < 2 {
-		cmdline = tmp[1]
+	if strings.HasPrefix(line, "/") == false {
+		return args, fmt.Errorf("not a server command")
 	}
+
+	if len(line) > 0 {
+		cmdline = line[1:]
+	}
+
 	if len(cmdline) > 0 {
 		a, err := shellwords.Parse(cmdline)
 		if err != nil {
-			return err
+			return args, err
 		}
 		args = a
 	}
 
-	log.Debugf("arguments parsed: %#v", args)
+	log.Tracef("cmdline %q: arguments parsed: %#v", cmdline, args)
+
+	return args, nil
+}
+
+func (h *chatHandler) handleServerCommand(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	log.Debugf("handleServerCommand %s/%d msg:%s", op, op, m)
+
+	args, err := parseCommand(m.Message)
+	if err != nil {
+		return err
+	}
+
+	if len(args) == 0 {
+		return fmt.Errorf("empty command")
+	}
+
+	cmd := args[0]
+	log.Debugf("dispatch cmd=%s args=%s", cmd, args)
+
+	if cmd == "who" {
+		hub.SendClientList(c.GetId())
+
+	} else {
+		log.Warnf("unknown command: cmd=%s", args)
+	}
 
 	return nil
 }
