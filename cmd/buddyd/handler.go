@@ -125,9 +125,16 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 		log.Infof("connection %d is now known as %v (nick %s)", c.GetId(), id, id.Nick)
 
 		// store the nickname
-		_, ok := h.nicknames[id.Nick]
+		existing_id, ok := h.nicknames[id.Nick]
 		if ok {
-			hub.Send(buddybot.NoticeOp, fmt.Sprintf("Nick name is already taken: %s", id.Nick))
+
+			existing_conn, err := h.hub.FindConnection(existing_id)
+			if err == nil {
+				if existing_conn.GetId() != existing_id {
+					hub.Send(buddybot.NoticeOp, fmt.Sprintf("Nick name is already taken: %s", id.Nick))
+				}
+			}
+
 		} else {
 			cid := c.GetId()
 			h.nicknames[id.Nick] = cid
