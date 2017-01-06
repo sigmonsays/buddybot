@@ -52,10 +52,15 @@ func (h *chatHandler) getHistory() []*buddybot.Message {
 }
 
 // entry point for message handling
-// handleMessage will call handle{Operation}Op for the appropriate buddybot.OpCode
-// if a message starts with "/" is is dispatched to handleServerCommand
-
+//
+// 	- handleMessage will call handle{Operation}Op for the appropriate buddybot.OpCode
+// 	- if a message starts with "/" is is dispatched to handleServerCommand
+//
 func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	if m == nil {
+		return fmt.Errorf("Null message")
+	}
+
 	if strings.HasPrefix(m.Message, "/") {
 		return h.handleServerCommand(op, hub, c, m)
 	}
