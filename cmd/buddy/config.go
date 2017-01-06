@@ -22,7 +22,7 @@ git_watch: true
 
 type BuddyConfig struct {
 	Hostname       string
-	LogLevel       string
+	LogLevel       string `yaml:"log_level"`
 	Nick           string
 	ServerAddress  string        `yaml:"server_address"`
 	ReconnectDelay time.Duration `yaml:"reconnect_delay"`
