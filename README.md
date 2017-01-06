@@ -13,5 +13,6 @@ Configuration lives in `HOME`/.buddy/buddy.yaml
 
 Parameter      | Default         | Description
 ---------------|-----------------|-------------------------------
-log_level      | info            | log level
+nick           | default         | nick name of node on server
 server_address | localhost:8080  | websocket server instance of buddyd
+log_level      | info            | log level
