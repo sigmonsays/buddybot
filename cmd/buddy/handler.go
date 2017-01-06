@@ -28,23 +28,32 @@ func (me *handler) OnMessage(m *buddybot.Message, ctx *Context) error {
 	log.Debugf("got message %s", m)
 	fmt.Printf("MESSAGE <%s> %s\n", m.From, m.Message)
 
-	if strings.HasPrefix(m.Message, "@") {
+	line := m.Message
+
+	if strings.HasPrefix(line, "@") {
 		return me.DirectMessage(m, ctx)
 	}
 
-	if m.Message == "ping" {
-		log.Debugf("sending pong...")
-		ctx.SendMessage("pong")
+	cline, err := ParseCommandLine(line)
+	if err != nil {
+		log.Warnf("parse command %q failed. %s", line, err)
+		return nil
 	}
-	return nil
-}
 
-// @nick <blah> is a direct message
-//
-// more precisely only the node <nick> should response
-//
-func (me *handler) DirectMessage(m *buddybot.Message, ctx *Context) error {
-	log.Debugf("direct message %s", m)
+	if cline.Arg0 == "ping" {
+
+		log.Debugf("sending pong...")
+		ctx.BroadcastMessage("pong")
+
+	} else if cline.Arg0 == "exec" {
+
+		cline.Args = cline.SliceArgs(1)
+
+		return me.execMessage(m, ctx, cline.Args)
+
+	} else if cline.Arg0 == "echo" {
+		fmt.Printf("%s\n", line)
+	}
 
 	return nil
 }

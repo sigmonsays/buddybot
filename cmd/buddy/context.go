@@ -21,9 +21,20 @@ func (me *Context) NewMessage() *buddybot.Message {
 	return m
 }
 
-func (me *Context) SendMessage(msg string) error {
+func (me *Context) BroadcastMessage(msg string) error {
 	m := me.NewMessage()
 	m.Message = msg
+
+	buf, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	err = me.Conn.WriteMessage(websocket.TextMessage, buf)
+	return err
+}
+
+func (me *Context) SendTo(cid int64, m *buddybot.Message) error {
+	m.Id = cid
 
 	buf, err := json.Marshal(m)
 	if err != nil {

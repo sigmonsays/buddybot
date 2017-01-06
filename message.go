@@ -8,6 +8,10 @@ import (
 	"github.com/google/uuid"
 )
 
+func NewMessage() *Message {
+	return &Message{}
+}
+
 type Message struct {
 	connection *Connection
 
@@ -45,4 +49,12 @@ func (m *Message) Json() []byte {
 func (m *Message) FromJson(data []byte) error {
 	err := json.Unmarshal(data, m)
 	return err
+}
+
+// convenience
+func NewNotice(s string, args ...interface{}) *Message {
+	m := NewMessage()
+	m.Op = NoticeOp
+	m.Message = fmt.Sprintf(s, args...)
+	return m
 }
