@@ -12,7 +12,7 @@ import (
 var defaultConfig = `
 # begin default built it configuration
 
-log_level: warn
+log_level: info
 reconnect_delay: 10s
 server_address: "localhost:8081"
 git_watch: true
