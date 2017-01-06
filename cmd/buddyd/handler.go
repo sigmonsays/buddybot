@@ -62,7 +62,7 @@ func (h *chatHandler) findNick(name string) (*buddybot.Connection, error) {
 	return c, err
 }
 
-// entry point for message handling
+// entry point for message handling (received messages)
 //
 // 	- handleMessage will call handle{Operation}Op for the appropriate buddybot.OpCode
 // 	- if a message starts with "/" is is dispatched to handleServerCommand
@@ -114,21 +114,6 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 	return nil
 }
 
-func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
-	log.Debugf("handleMessage %s/%d msg:%s", op, op, m)
-	hub.SendBroadcast(m)
-	return nil
-}
-
-func (h *chatHandler) handleUnregisterOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
-	return nil
-}
-
-func (h *chatHandler) handleRegisterOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
-	hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has left", c.Identity))
-	return nil
-}
-
 func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) (*buddybot.Identity, error) {
 	if m.From == "" {
 		return nil, fmt.Errorf("Join without a name (From not set)")
@@ -157,6 +142,21 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 	}
 
 	return id, nil
+}
+
+func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	log.Debugf("handleMessage %s/%d msg:%s", op, op, m)
+	hub.SendBroadcast(m)
+	return nil
+}
+
+func (h *chatHandler) handleUnregisterOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	return nil
+}
+
+func (h *chatHandler) handleRegisterOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has left", c.Identity))
+	return nil
 }
 
 func (h *chatHandler) handleJoinOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
