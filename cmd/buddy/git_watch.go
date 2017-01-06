@@ -16,7 +16,7 @@ type upgrader struct {
 func GitWatch(conf *BuddyConfig) {
 	code_directory := "."
 	branch := "master"
-	interval := 60
+	interval := 300
 	gopath := os.Getenv("GOPATH")
 
 	gw := git.NewGitWatch(code_directory, branch)
