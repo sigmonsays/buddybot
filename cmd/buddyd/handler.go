@@ -58,7 +58,10 @@ func (h *chatHandler) getHistory() []*buddybot.Message {
 //
 func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
 	if m == nil {
-		return fmt.Errorf("Null message")
+		// just make an empty message
+		m = &buddybot.Message{
+			Op: buddybot.InvalidOp,
+		}
 	}
 
 	if strings.HasPrefix(m.Message, "/") {
