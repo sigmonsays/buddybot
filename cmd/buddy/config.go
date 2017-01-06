@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"time"
 
 	goyaml "gopkg.in/yaml.v2"
 )
@@ -11,16 +12,19 @@ import (
 var defaultConfig = `
 # begin default built it configuration
 
+log_level: warn
+reconnect_delay: 10s
 server_address: "localhost:8081"
 
 # end default built it configuration
 `
 
 type BuddyConfig struct {
-	Hostname      string
-	LogLevel      string
-	Nick          string
-	ServerAddress string `yaml:"server_address"`
+	Hostname       string
+	LogLevel       string
+	Nick           string
+	ServerAddress  string        `yaml:"server_address"`
+	ReconnectDelay time.Duration `yaml:"reconnect_delay"`
 }
 
 func (c *BuddyConfig) LoadDefault() {

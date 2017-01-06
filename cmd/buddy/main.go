@@ -57,6 +57,10 @@ func main() {
 
 	gologging.SetLogLevel(conf.LogLevel)
 
+	if verbose {
+		conf.PrintYaml()
+	}
+
 	identity := buddybot.NewIdentity()
 	handler := NewHandler(identity)
 	context := &Context{
@@ -70,6 +74,8 @@ func main() {
 		verbose:   verbose,
 		handler:   handler,
 		context:   context,
+
+		reconnectDelay: conf.ReconnectDelay,
 	}
 
 	state.identity.Nick = conf.Nick
@@ -108,6 +114,8 @@ type state struct {
 	c       *websocket.Conn
 	handler *handler
 	context *Context
+
+	reconnectDelay time.Duration
 }
 
 func (me *state) loop() error {
@@ -119,7 +127,8 @@ func (me *state) loop() error {
 			break
 		}
 		if err != nil {
-			time.Sleep(time.Duration(1) * time.Second)
+			log.Warnf("Connection failed; %s: delay %s", err, me.reconnectDelay)
+			time.Sleep(me.reconnectDelay)
 		}
 	}
 
@@ -134,7 +143,7 @@ func (me *state) ioloop() error {
 	log.Infof("Connecting to %s", u.String())
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		log.Errorf("dial: %s", err)
+		log.Debugf("dial: %s", err)
 		return err
 	}
 
