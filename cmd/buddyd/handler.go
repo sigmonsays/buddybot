@@ -66,6 +66,7 @@ func (h *chatHandler) findNick(name string) (*buddybot.Connection, error) {
 //
 // 	- handleMessage will call handle{Operation}Op for the appropriate buddybot.OpCode
 // 	- if a message starts with "/" is is dispatched to handleServerCommand
+// 	- if a message starts with "#" is is dispatched to handleDirectMessage
 //
 func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
 	if m == nil {
@@ -77,6 +78,9 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 
 	if strings.HasPrefix(m.Message, "/") {
 		return h.handleServerCommand(op, hub, c, m)
+	}
+	if strings.HasPrefix(m.Message, "#") {
+		return h.handleDirectMessage(op, hub, c, m)
 	}
 
 	// dispatch appropriate operation
