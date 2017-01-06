@@ -245,7 +245,13 @@ func (me *state) receiveMessage(msg []byte) error {
 			return nil
 		}
 		for _, c := range cl.List {
-			fmt.Printf("client cid=%d %s\n", c.Id, c.Identity)
+
+			id, err := buddybot.ParseIdentity(c.Identity)
+			if err != nil {
+				log.Debugf("ParseIdentity %q: %s", c.Identity, err)
+				id = &buddybot.Identity{}
+			}
+			fmt.Printf("client cid=%d nick=%s %s\n", c.Id, id.Nick, id)
 		}
 
 	} else {
