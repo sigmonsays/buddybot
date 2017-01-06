@@ -18,7 +18,7 @@ type upgrader struct {
 func GitWatch(conf *BuddyConfig) {
 	code_directory := "."
 	branch := "master"
-	interval := 300
+	interval := 30
 	gopath := os.Getenv("GOPATH")
 	upgrade_dir := filepath.Join(gopath, "src/github.com/sigmonsays/buddybot")
 
