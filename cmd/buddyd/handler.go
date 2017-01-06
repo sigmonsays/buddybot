@@ -153,7 +153,36 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 
 func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
 	log.Debugf("handleMessage %s/%d msg:%s", op, op, m)
-	hub.SendBroadcast(m)
+
+	var (
+		sconn *buddybot.Connection
+		dconn *buddybot.Connection
+		err   error
+	)
+
+	if m.From != "" {
+		sconn, err = h.findNick(m.From)
+		if err == nil {
+			m.IdFrom = sconn.GetId()
+		} else {
+			log.Warnf("findNick from=%s: %s", m.From, err)
+		}
+	}
+
+	if m.To != "" {
+		dconn, err = h.findNick(m.To)
+		if err == nil {
+			m.IdTo = dconn.GetId()
+		} else {
+			log.Warnf("findNick to=%s: %s", m.To, err)
+		}
+	}
+
+	if m.IdTo == 0 {
+		hub.SendBroadcast(m)
+	} else {
+		hub.SendTo(dconn, m)
+	}
 	return nil
 }
 

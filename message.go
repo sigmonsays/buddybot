@@ -23,6 +23,10 @@ type Message struct {
 	// type of message
 	Op OpCode `json:"op"`
 
+	// integer identifiers
+	IdTo   int64
+	IdFrom int64
+
 	// to and from addresses
 	To   string `json:"to,omitempty"`
 	From string `json:"from,omitempty"`
