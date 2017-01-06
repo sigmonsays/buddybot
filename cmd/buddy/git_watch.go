@@ -3,14 +3,16 @@ package main
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/sigmonsays/git-watch/watch/git"
 )
 
 type upgrader struct {
-	gopath string
-	go_pkg string
+	gopath      string
+	upgrade_dir string
+	go_pkg      string
 }
 
 func GitWatch(conf *BuddyConfig) {
@@ -18,10 +20,11 @@ func GitWatch(conf *BuddyConfig) {
 	branch := "master"
 	interval := 300
 	gopath := os.Getenv("GOPATH")
+	upgrade_dir := filepath.Join(gopath, "src/github.com/sigmonsays/buddybot")
 
 	gw := git.NewGitWatch(code_directory, branch)
 	gw.Interval = interval
-	gw.Dir = gopath
+	gw.Dir = upgrade_dir
 
 	err := gw.Start()
 	if err != nil {
@@ -30,8 +33,9 @@ func GitWatch(conf *BuddyConfig) {
 	}
 
 	upgrader := &upgrader{
-		gopath: gopath,
-		go_pkg: "github.com/sigmonsays/buddybot/...",
+		gopath:      gopath,
+		upgrade_dir: upgrade_dir,
+		go_pkg:      "github.com/sigmonsays/buddybot/...",
 	}
 
 	gw.OnChange = upgrader.OnChange
@@ -55,7 +59,7 @@ func (me *upgrader) OnChange(dir, branch, lhash, rhash string) error {
 	// do a git pull
 	cmdline = []string{"git", "pull"}
 	cmd := exec.Command(cmdline[0], cmdline[1:]...)
-	cmd.Dir = me.gopath
+	cmd.Dir = me.upgrade_dir
 	err := cmd.Start()
 	if err != nil {
 		log.Warnf("upgarde error: git pull: %s", err)
@@ -65,7 +69,7 @@ func (me *upgrader) OnChange(dir, branch, lhash, rhash string) error {
 	// do the upgrade (this will pull it any dependencies)
 	cmdline = []string{"go", "get", "-u", me.go_pkg}
 	cmd = exec.Command(cmdline[0], cmdline[1:]...)
-	cmd.Dir = me.gopath
+	cmd.Dir = me.upgrade_dir
 	err = cmd.Start()
 	if err != nil {
 		log.Warnf("upgrade error: go get %s", err)
@@ -75,7 +79,7 @@ func (me *upgrader) OnChange(dir, branch, lhash, rhash string) error {
 	// do the install
 	cmdline = []string{"go", "install", me.go_pkg}
 	cmd = exec.Command(cmdline[0], cmdline[1:]...)
-	cmd.Dir = me.gopath
+	cmd.Dir = me.upgrade_dir
 	err = cmd.Start()
 	if err != nil {
 		log.Warnf("upgrade error: go install %s", err)
