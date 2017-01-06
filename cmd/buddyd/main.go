@@ -1,7 +1,6 @@
 package main
 
 import (
-	"container/list"
 	"flag"
 	"net/http"
 	"os"
@@ -41,10 +40,9 @@ func main() {
 		log.Errorf("NewHandler: ", err)
 	}
 
-	handler := &chatHandler{
-		staticDir: staticDir,
-		history:   list.New(),
-	}
+	handleropts := DefaultChatHandlerOptions()
+	handleropts.StaticDir = staticDir
+	handler := NewChatHandler(hub, handleropts)
 
 	for _, op := range buddybot.OpCodes() {
 		hub.OnCallback(op, handler.handleMessage)

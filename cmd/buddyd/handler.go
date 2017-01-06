@@ -1,21 +1,41 @@
 package main
 
 import (
-	"container/list"
 	"fmt"
 	"html/template"
 	"net/http"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/sigmonsays/buddybot"
 )
 
+func NewChatHandler(hub *buddybot.Hub, opts *ChatHandlerOptions) *chatHandler {
+	handler := &chatHandler{
+		hub:       hub,
+		staticDir: opts.StaticDir,
+		nicknames: make(map[string]int64, 0),
+	}
+	return handler
+}
+
+func DefaultChatHandlerOptions() *ChatHandlerOptions {
+	o := &ChatHandlerOptions{
+		StaticDir: "/tmp/chat",
+	}
+	return o
+}
+
+type ChatHandlerOptions struct {
+	StaticDir string
+}
+
 type chatHandler struct {
-	mx        sync.Mutex
+	hub       *buddybot.Hub
 	staticDir string
-	history   *list.List
+
+	// nickname associates to connection id
+	nicknames map[string]int64
 }
 
 func (h *chatHandler) serveHome(w http.ResponseWriter, r *http.Request) {
@@ -30,25 +50,16 @@ func (h *chatHandler) serveHome(w http.ResponseWriter, r *http.Request) {
 	homeTempl.Execute(w, r.Host)
 }
 
-func (h *chatHandler) addHistory(m *buddybot.Message) {
-	h.mx.Lock()
-	defer h.mx.Unlock()
-	h.history.PushBack(m)
-	if h.history.Len() > 5 {
-		if e := h.history.Front(); e != nil {
-			h.history.Remove(e)
-		}
-	}
-}
+func (h *chatHandler) findNick(name string) (*buddybot.Connection, error) {
 
-func (h *chatHandler) getHistory() []*buddybot.Message {
-	h.mx.Lock()
-	defer h.mx.Unlock()
-	ret := make([]*buddybot.Message, 0)
-	for e := h.history.Front(); e != nil; e = e.Next() {
-		ret = append(ret, e.Value.(*buddybot.Message))
+	cid, ok := h.nicknames[name]
+	if ok == false {
+		return nil, fmt.Errorf("not found: %s", name)
 	}
-	return ret
+
+	c, err := h.hub.FindConnection(cid)
+
+	return c, err
 }
 
 // entry point for message handling
@@ -114,9 +125,9 @@ func (h *chatHandler) handleRegisterOp(op buddybot.OpCode, hub *buddybot.Hub, c 
 	return nil
 }
 
-func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) (*buddybot.Identity, error) {
 	if m.From == "" {
-		return fmt.Errorf("Join without a name (From not set)")
+		return nil, fmt.Errorf("Join without a name (From not set)")
 	}
 
 	c.Identity = m.From
@@ -130,7 +141,8 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 		}
 		hub.SendTo(c, m)
 	}
-	return nil
+
+	return id, nil
 }
 
 func (h *chatHandler) handleJoinOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
@@ -150,7 +162,23 @@ func (h *chatHandler) handleNickOp(op buddybot.OpCode, hub *buddybot.Hub, c *bud
 		hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has changed their name to %s", c.Identity, m.From))
 	}
 	c.Identity = m.From
-	h.setConnectionIdentity(op, hub, c, m)
+
+	id, err := h.setConnectionIdentity(op, hub, c, m)
+	if err != nil {
+		log.Warnf("setConnectionIdentity cid:%d: %s", c.GetId(), err)
+	}
+
+	// store the nickname
+	if id != nil {
+		if _, ok := h.nicknames[id.Nick]; ok {
+			hub.Send(buddybot.NoticeOp, fmt.Sprintf("Nick name is already taken: %s", id.Nick))
+			return nil
+		}
+
+		cid := c.GetId()
+		h.nicknames[id.Nick] = cid
+	}
+
 	return nil
 }
 

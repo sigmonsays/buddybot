@@ -2,7 +2,6 @@ package buddybot
 
 import (
 	"fmt"
-	"sync"
 
 	gologging "github.com/sigmonsays/go-logging"
 )
@@ -27,7 +26,6 @@ type Hub struct {
 	broadcast   chan *message
 	register    chan *Connection
 	unregister  chan *Connection
-	mx          sync.Mutex
 
 	callbacks map[OpCode][]CallbackFn
 	log       gologging.Logger
@@ -141,6 +139,10 @@ func (h *Hub) SendClientList(id int64) error {
 	h.log.Debugf("sent client list (%d clients) to connection id %d", len(ls.List), id)
 
 	return h.SendTo(destination, msg)
+}
+
+func (h *Hub) FindConnection(id int64) (*Connection, error) {
+	return h.findConnection(id)
 }
 
 func (h *Hub) findConnection(id int64) (*Connection, error) {
