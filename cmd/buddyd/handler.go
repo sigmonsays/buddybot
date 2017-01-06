@@ -170,9 +170,3 @@ func (h *chatHandler) handleClientListOp(op buddybot.OpCode, hub *buddybot.Hub, 
 	}
 	return nil
 }
-
-func (h *chatHandler) handleServerCommand(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
-	log.Debugf("handleServerCommand %s/%d msg:%s", op, op, m)
-
-	return nil
-}
