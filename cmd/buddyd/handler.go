@@ -139,6 +139,15 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 	if err == nil {
 		log.Infof("connection %d is now known as %v (nick %s)", c.GetId(), id, id.Nick)
 
+		// store the nickname
+		_, ok := h.nicknames[id.Nick]
+		if ok {
+			hub.Send(buddybot.NoticeOp, fmt.Sprintf("Nick name is already taken: %s", id.Nick))
+		} else {
+			cid := c.GetId()
+			h.nicknames[id.Nick] = cid
+		}
+
 	} else {
 		m := &buddybot.Message{
 			Op:      buddybot.NoticeOp,
@@ -170,20 +179,9 @@ func (h *chatHandler) handleNickOp(op buddybot.OpCode, hub *buddybot.Hub, c *bud
 	}
 	c.Identity = m.From
 
-	id, err := h.setConnectionIdentity(op, hub, c, m)
+	_, err := h.setConnectionIdentity(op, hub, c, m)
 	if err != nil {
 		log.Warnf("NickOp: setConnectionIdentity cid:%d: %s", c.GetId(), err)
-	}
-
-	// store the nickname
-	if id != nil {
-		if _, ok := h.nicknames[id.Nick]; ok {
-			hub.Send(buddybot.NoticeOp, fmt.Sprintf("Nick name is already taken: %s", id.Nick))
-			return nil
-		}
-
-		cid := c.GetId()
-		h.nicknames[id.Nick] = cid
 	}
 
 	return nil
