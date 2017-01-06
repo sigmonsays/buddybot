@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strings"
@@ -74,6 +75,12 @@ func main() {
 		if gopath == "" {
 			StartupError("GOPATH must be set for git_watch to work")
 		}
+
+		git_path, err := exec.LookPath("git")
+		if err != nil {
+			StartupError("can not find git command: %s", err)
+		}
+		log.Debugf("git patch %s", git_path)
 
 		devrestarter.Init()
 		go GitWatch(conf)
