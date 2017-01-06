@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -30,20 +31,31 @@ const (
 
 func main() {
 
-	addr := "localhost"
 	path := "/chat/ws"
-	nick := "default"
-	loglevel := "info"
 	verbose := false
 
-	flag.StringVar(&addr, "addr", addr, "address")
+	conf := GetDefaultConfig()
+
+	flag.StringVar(&conf.ServerAddress, "addr", conf.ServerAddress, "address of buddyd websocket server")
 	flag.StringVar(&path, "path", path, "path")
-	flag.StringVar(&nick, "nick", nick, "nick name")
-	flag.StringVar(&loglevel, "log", loglevel, "log level")
+	flag.StringVar(&conf.Nick, "nick", conf.Nick, "nick name")
+	flag.StringVar(&conf.LogLevel, "log", conf.LogLevel, "log level")
 	flag.BoolVar(&verbose, "verbose", verbose, "be verbose")
 	flag.Parse()
 
-	gologging.SetLogLevel(loglevel)
+	// load home config
+	user_conf := filepath.Join(os.Getenv("HOME"), ".buddy", "buddy.yaml")
+	st, err := os.Stat(user_conf)
+	if err == nil && st.IsDir() == false {
+
+	}
+
+	// generate a nick if its empty
+	if conf.Nick == "" {
+		conf.Nick = fmt.Sprintf("user-%d", time.Now().Unix())
+	}
+
+	gologging.SetLogLevel(conf.LogLevel)
 
 	identity := buddybot.NewIdentity()
 	handler := NewHandler(identity)
@@ -51,7 +63,7 @@ func main() {
 		Identity: identity,
 	}
 	state := &state{
-		addr:      addr,
+		addr:      conf.ServerAddress,
 		path:      path,
 		identity:  identity,
 		connstate: make(chan ConnState, 10),
@@ -60,7 +72,7 @@ func main() {
 		context:   context,
 	}
 
-	state.identity.Nick = nick
+	state.identity.Nick = conf.Nick
 	log.Infof("Identity %s", state.identity.String())
 
 	// signal to interrupt
