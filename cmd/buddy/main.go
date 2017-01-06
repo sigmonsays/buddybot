@@ -48,6 +48,11 @@ func main() {
 	st, err := os.Stat(user_conf)
 	if err == nil && st.IsDir() == false {
 
+		err = conf.LoadYaml(user_conf)
+		if err != nil {
+			StartupError("LoadYaml %s", err)
+		}
+
 	}
 
 	// generate a nick if its empty
