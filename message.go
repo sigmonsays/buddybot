@@ -9,7 +9,9 @@ import (
 )
 
 func NewMessage() *Message {
-	return &Message{}
+	return &Message{
+		Op: MessageOp,
+	}
 }
 
 type Message struct {

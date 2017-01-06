@@ -40,6 +40,9 @@ func (me *Context) SendTo(cid int64, m *buddybot.Message) error {
 	if err != nil {
 		return err
 	}
+
+	log.Tracef("SendTo cid=%d: %s", cid, buf)
+
 	err = me.Conn.WriteMessage(websocket.TextMessage, buf)
 	return err
 }

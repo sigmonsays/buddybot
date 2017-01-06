@@ -34,6 +34,7 @@ func (me *handler) DirectMessage(m *buddybot.Message, ctx *Context) error {
 	return nil
 }
 
+// execute a shell command and send response back
 func (me *handler) execMessage(m *buddybot.Message, ctx *Context, line []string) error {
 	log.Debugf("exec message - exec %q", line)
 
@@ -44,7 +45,35 @@ func (me *handler) execMessage(m *buddybot.Message, ctx *Context, line []string)
 		return nil
 	}
 
-	log.Debugf("execMessage %#v", res)
+	log.Debugf("execMessage pid=%d", res.Pid)
+
+	var buf string
+	var ok bool
+	msg := ctx.NewMessage()
+Dance:
+	for {
+		select {
+		case buf, ok = <-res.Stdout:
+			if ok == false {
+				break Dance
+			}
+			msg.Message = "<stdout> " + strings.TrimRight(buf, "\n")
+			ctx.SendTo(m.Id, msg)
+		case buf, ok = <-res.Stderr:
+			if ok == false {
+				break Dance
+			}
+			msg.Message = "<stderr> " + strings.TrimRight(buf, "\n")
+			ctx.SendTo(m.Id, msg)
+		}
+	}
+
+	err = res.Wait()
+	if err != nil {
+		log.Warnf("Wait returned %s", err)
+	}
+
+	log.Debugf("finished exec - %q", line)
 
 	return nil
 }
