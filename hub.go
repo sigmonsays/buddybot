@@ -175,6 +175,11 @@ func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
 }
 
 func (h *Hub) Start() {
+
+	if h.verbose {
+		h.log.SetLevel("TRACE")
+	}
+
 	h.log.Debugf("start")
 	for {
 		select {
