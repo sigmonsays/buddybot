@@ -182,12 +182,13 @@ func (h *chatHandler) handleDirectMessageOp(op buddybot.OpCode, hub *buddybot.Hu
 
 	to_nick := m.ToIdentity().Nick
 	dconn, err = h.findNick(to_nick)
-	if err == nil {
-		m.IdTo = dconn.GetId()
-		log.Tracef("set message To=%s: connection id=%d", to_nick, m.IdTo)
-	} else {
-		log.Warnf("findNick to=%s: %s", to_nick, err)
+	if err != nil {
+		log.Warnf("no destination connection for nick %s: %s", to_nick, err)
+		return nil
 	}
+
+	m.IdTo = dconn.GetId()
+	log.Tracef("set message To=%s: connection id=%d", to_nick, m.IdTo)
 	hub.SendTo(dconn, m.Reply())
 	return nil
 }
