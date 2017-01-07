@@ -46,9 +46,8 @@ func (m *Message) Copy() *Message {
 // copies the message and flips the to/from
 func (m *Message) Reply() *Message {
 	m2 := m.Copy()
-	to := m2.To
 	m2.To = m.From
-	m2.From = to
+	m2.From = m.To
 	return m2
 }
 
