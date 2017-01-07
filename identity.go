@@ -18,7 +18,7 @@ func ParseIdentity(identity string) (*Identity, error) {
 	i := NewIdentity()
 
 	if identity == "" {
-		return nil, fmt.Errorf("empty identity")
+		return i, fmt.Errorf("empty identity")
 	}
 
 	// just allow usernames tp be used without following the identity format

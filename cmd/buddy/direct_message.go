@@ -47,6 +47,7 @@ func (me *handler) DirectMessage(m *buddybot.Message, ctx *Context) error {
 
 	} else {
 		reply := m.Reply()
+		reply.Op = buddybot.DirectMessageOp
 		log.Infof("No such command: %s", line)
 		ctx.Send(reply.WithMessage("no such command: %s", line))
 
