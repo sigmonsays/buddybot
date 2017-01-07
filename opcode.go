@@ -16,6 +16,9 @@ const (
 	// a message has been sent
 	MessageOp
 
+	// message directly to a single person
+	DirectMessageOp
+
 	// a notice is a informational message. likely from the system
 	NoticeOp
 	// a user has joined

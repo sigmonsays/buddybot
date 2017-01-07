@@ -104,3 +104,9 @@ func NewNotice(s string, args ...interface{}) *Message {
 	m.Message = fmt.Sprintf(s, args...)
 	return m
 }
+func NewDirectMessage(s string, args ...interface{}) *Message {
+	m := NewMessage()
+	m.Op = DirectMessageOp
+	m.Message = fmt.Sprintf(s, args...)
+	return m
+}
