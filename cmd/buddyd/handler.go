@@ -156,6 +156,15 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 
 func (h *chatHandler) handleDirectMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
 	log.Debugf("handleMessage %s/%d msg:%s", op, op, m)
+	if m.From == "" {
+		log.Warnf("dropping direct message without from address: %s", m)
+		return nil
+	}
+	if m.To == "" {
+		log.Warnf("dropping direct message without to address: %s", m)
+		return nil
+	}
+
 	var (
 		sconn *buddybot.Connection
 		dconn *buddybot.Connection
@@ -186,6 +195,11 @@ func (h *chatHandler) handleDirectMessageOp(op buddybot.OpCode, hub *buddybot.Hu
 // this message operation is broadcasted to everyone
 func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
 	log.Debugf("handleMessage %s/%d msg:%s", op, op, m)
+
+	if m.From == "" {
+		log.Warnf("dropping message without from address: %s", m)
+		return nil
+	}
 
 	hub.SendBroadcast(m)
 
