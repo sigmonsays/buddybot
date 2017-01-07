@@ -37,6 +37,46 @@ type Message struct {
 	Tag string `json:"tag,omitempty"`
 }
 
+func (m *Message) Copy() *Message {
+	var m2 Message
+	m2 = *m
+	return &m2
+}
+
+// copies the message and flips the to/from
+func (m *Message) Reply() *Message {
+	m2 := m.Copy()
+	to := m2.To
+	m2.To = m.From
+	m2.From = to
+	return m2
+}
+
+func (m *Message) FromIdentity() *Identity {
+	ident, _ := ParseIdentity(m.From)
+	return ident
+}
+
+func (m *Message) ToIdentity() *Identity {
+	ident, _ := ParseIdentity(m.To)
+	return ident
+}
+
+func (m *Message) WithMessage(s string, args ...interface{}) *Message {
+	m.Message = fmt.Sprintf(s, args...)
+	return m
+}
+
+func (m *Message) WithTo(s string) *Message {
+	m.To = s
+	return m
+}
+
+func (m *Message) WithFrom(s string) *Message {
+	m.From = s
+	return m
+}
+
 // set a new tag on the message
 func (m *Message) GenerateTag() {
 	uu := uuid.New()
@@ -45,8 +85,8 @@ func (m *Message) GenerateTag() {
 }
 
 func (m *Message) String() string {
-	return fmt.Sprintf("cid:%d op:%s/%d from:%q message:%q",
-		m.Id, m.Op, m.Op, m.From, m.Message)
+	return fmt.Sprintf("cid:%d op:%s/%d to:%q from:%q message:%q",
+		m.Id, m.Op, m.Op, m.To, m.From, m.Message)
 }
 func (m *Message) Json() []byte {
 	data, _ := json.Marshal(m)
