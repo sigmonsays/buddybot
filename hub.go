@@ -68,6 +68,11 @@ func (h *Hub) setMessageIdentity(c *Connection, m *Message) {
 		m.Id = c.id
 	}
 
+	// fill in the destination address w/ the connection we're sending to
+	if m.To == "" {
+		m.To = c.Identity
+	}
+
 	// they are allowed to specify the identity with JoinOp
 	/*
 		if m.Op != JoinOp {
