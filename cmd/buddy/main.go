@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -300,7 +301,7 @@ func (me *state) receiveMessage(msg []byte) error {
 				log.Debugf("ParseIdentity %q: %s", c.Identity, err)
 				id = &buddybot.Identity{}
 			}
-			fmt.Printf(" client cid=%d nick=%s %s\n", c.Id, id.Nick, id)
+			fmt.Printf(" client cid=%-4s nick=%-25s %s\n", strconv.FormatInt(c.Id, 10), id.Nick, id)
 		}
 		fmt.Printf("\n")
 
