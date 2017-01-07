@@ -86,8 +86,8 @@ func (h *Hub) getIdentity(id int64) string {
 }
 
 func (h *Hub) SendTo(c *Connection, m *Message) error {
-	h.log.Tracef("SendTo conn %s", c)
 	h.setMessageIdentity(c, m)
+	h.log.Tracef("SendTo to=(%s) msg=%s", c, m)
 	select {
 	case c.send <- m:
 	default:
