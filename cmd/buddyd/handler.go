@@ -146,7 +146,6 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 	c.Identity = m.From
 	id, err := buddybot.ParseIdentity(m.From)
 	if err == nil {
-		log.Infof("connection %d is now known as %v (nick %s)", c.GetId(), id, id.Nick)
 		h.storeNick(hub, c, id)
 
 	} else {
