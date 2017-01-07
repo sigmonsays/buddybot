@@ -6,6 +6,11 @@ import (
 	"github.com/sigmonsays/buddybot"
 )
 
+var (
+	stdoutPrefix = "    "
+	stderrPrefix = " || "
+)
+
 // execute a shell command and send response back
 func (me *CommandSet) execMessage(from string, m *buddybot.Message, ctx *Context, line []string) error {
 	log.Debugf("exec message - exec %q", line)
@@ -32,7 +37,7 @@ Dance:
 				res.Stdout = nil
 				continue
 			}
-			msg.Message = "<stdout> " + strings.TrimRight(buf, "\n")
+			msg.Message = stdoutPrefix + strings.TrimRight(buf, "\n")
 			ctx.SendTo(m.Id, msg)
 
 		case buf, ok = <-res.Stderr:
@@ -40,7 +45,7 @@ Dance:
 				res.Stderr = nil
 				continue
 			}
-			msg.Message = "<stderr> " + strings.TrimRight(buf, "\n")
+			msg.Message = stderrPrefix + strings.TrimRight(buf, "\n")
 			ctx.SendTo(m.Id, msg)
 
 		case <-res.Done:
