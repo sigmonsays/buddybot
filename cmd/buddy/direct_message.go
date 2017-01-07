@@ -23,15 +23,9 @@ func (me *handler) DirectMessage(m *buddybot.Message, ctx *Context) error {
 		mention = m.Message[1:offset]
 	}
 
-	m.From = mention
-
 	if mention != "all" && mention != me.identity.Nick {
 		log.Debugf("not for me (@ mention %s)", mention)
 		return nil
-	}
-
-	if mention == "all" {
-		m.From = ""
 	}
 
 	cline, err := ParseCommandLine(line)
@@ -40,9 +34,23 @@ func (me *handler) DirectMessage(m *buddybot.Message, ctx *Context) error {
 		return nil
 	}
 
-	cline.Args = cline.SliceArgs(1)
+	cmd := cline.Arg(0)
 
-	me.execMessage(m, ctx, cline.Args)
+	if cmd == "" {
+		log.Warnf("no command given: %s", line)
+		return nil
+	}
+
+	if cmd == "exec" {
+		cline.Args = cline.SliceArgs(1)
+		me.execMessage(m.FromIdentity().Nick, m, ctx, cline.Args)
+
+	} else {
+		reply := m.Reply()
+		log.Infof("No such command: %s", line)
+		ctx.SendTo(m.Id, reply.WithMessage("no such command: %s", line))
+
+	}
 
 	return nil
 }

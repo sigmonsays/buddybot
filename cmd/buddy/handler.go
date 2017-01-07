@@ -49,7 +49,7 @@ func (me *handler) OnMessage(m *buddybot.Message, ctx *Context) error {
 
 		cline.Args = cline.SliceArgs(1)
 
-		return me.execMessage(m, ctx, cline.Args)
+		return me.execMessage(m.FromIdentity().Nick, m, ctx, cline.Args)
 
 	} else if cline.Arg0 == "echo" {
 		fmt.Printf("%s\n", line)
