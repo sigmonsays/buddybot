@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"io"
 	"os/exec"
-	"sync"
 )
 
 var NL = byte('\n')
@@ -22,29 +21,49 @@ type ExecResult struct {
 
 	Pid      int
 	ExitCode int
+	Done     chan error
 
 	errResult chan error
 	Stdout    chan string
 	Stderr    chan string
+	finished  chan bool
 
-	wg sync.WaitGroup
+	pending int
 }
 
 func (me *ExecResult) process() {
-	me.wg.Add(1)
-	defer me.wg.Done()
-	err := me.cmd.Wait()
 
-	me.errResult <- err
+	go func() {
+		defer func() { me.finished <- true }()
+		err := me.cmd.Wait()
+		log.Debugf("Wait returned %s", err)
+		me.errResult <- err
+	}()
+
+	var err error
+
+Dance:
+	for {
+		select {
+		case err = <-me.errResult:
+			break Dance
+
+		case <-me.finished:
+			me.pending--
+			log.Debugf("pending=%d", me.pending)
+		}
+		if me.pending == 0 {
+			break Dance
+		}
+	}
+
+	me.Done <- err
+
+	return
 }
 
-func (me *ExecResult) Wait() error {
-	return <-me.errResult
-}
-
-func stream(input io.Reader, out chan string, wg sync.WaitGroup) {
-	wg.Add(1)
-	defer wg.Done()
+func stream(input io.Reader, out chan string, finished chan bool) {
+	defer func() { finished <- true }()
 
 	bio := bufio.NewReader(input)
 	for {
@@ -56,9 +75,9 @@ func stream(input io.Reader, out chan string, wg sync.WaitGroup) {
 			log.Warnf("stream: ReadBytes: %s", err)
 			break
 		}
+		log.Tracef("line: (%d) %q", len(line), line)
 		out <- string(line)
 	}
-	close(out)
 }
 
 // handles a exec command from the CLI
@@ -80,6 +99,9 @@ func (me *ShellExec) ExecMessage(args []string) (*ExecResult, error) {
 		errResult: make(chan error, 1),
 		Stdout:    make(chan string, 0),
 		Stderr:    make(chan string, 0),
+		finished:  make(chan bool, 3),
+		pending:   3,
+		Done:      make(chan error, 1),
 	}
 
 	stdout, err := cmd.StdoutPipe()
@@ -91,19 +113,17 @@ func (me *ShellExec) ExecMessage(args []string) (*ExecResult, error) {
 		return res, err
 	}
 
-	go stream(stdout, res.Stdout, res.wg)
-	go stream(stderr, res.Stderr, res.wg)
-
 	err = cmd.Start()
 	if err != nil {
 		return nil, err
 	}
 
-	go res.process()
+	go stream(stdout, res.Stdout, res.finished)
+	go stream(stderr, res.Stderr, res.finished)
 
 	res.Pid = cmd.Process.Pid
 
-	// res.ExitCode todo
+	go res.process()
 
 	return res, nil
 }

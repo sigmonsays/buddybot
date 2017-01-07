@@ -1,0 +1,44 @@
+package main
+
+import (
+	"strings"
+
+	"github.com/sigmonsays/buddybot"
+)
+
+// execute a shell command and send response back
+func (me *handler) execMessage(m *buddybot.Message, ctx *Context, line []string) error {
+	log.Debugf("exec message - exec %q", line)
+
+	se := NewShellExec()
+	res, err := se.ExecMessage(line)
+	if err != nil {
+		ctx.SendTo(m.Id, buddybot.NewNotice("%s", err))
+		return nil
+	}
+
+	log.Debugf("execMessage pid=%d", res.Pid)
+
+	var buf string
+	msg := ctx.NewMessage()
+
+Dance:
+	for {
+		select {
+		case buf = <-res.Stdout:
+			msg.Message = "<stdout> " + strings.TrimRight(buf, "\n")
+			ctx.SendTo(m.Id, msg)
+
+		case buf = <-res.Stderr:
+			msg.Message = "<stderr> " + strings.TrimRight(buf, "\n")
+			ctx.SendTo(m.Id, msg)
+
+		case <-res.Done:
+			break Dance
+		}
+	}
+
+	log.Debugf("finished exec - %q", line)
+
+	return nil
+}
