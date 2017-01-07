@@ -7,7 +7,7 @@ import (
 )
 
 // execute a shell command and send response back
-func (me *handler) execMessage(from string, m *buddybot.Message, ctx *Context, line []string) error {
+func (me *CommandSet) execMessage(from string, m *buddybot.Message, ctx *Context, line []string) error {
 	log.Debugf("exec message - exec %q", line)
 
 	se := NewShellExec()

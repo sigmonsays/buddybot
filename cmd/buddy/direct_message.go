@@ -41,17 +41,13 @@ func (me *handler) DirectMessage(m *buddybot.Message, ctx *Context) error {
 		return nil
 	}
 
-	if cmd == "exec" {
-		cline.Args = cline.SliceArgs(1)
-		me.execMessage(m.FromIdentity().Nick, m, ctx, cline.Args)
-
-	} else {
+	err = me.commands.Dispatch(m, ctx, cline)
+	if err != nil {
 		reply := m.Reply()
 		reply.Op = buddybot.DirectMessageOp
 		reply.To = mention
 		log.Infof("No such command: %s", line)
 		ctx.Send(reply.WithMessage("no such command: %s", line))
-
 	}
 
 	return nil

@@ -10,12 +10,14 @@ import (
 func NewHandler(identity *buddybot.Identity) *handler {
 	h := &handler{
 		identity: identity,
+		commands: NewCommandSet(),
 	}
 	return h
 }
 
 type handler struct {
 	identity *buddybot.Identity
+	commands *CommandSet
 }
 
 func (me *handler) OnNotice(m *buddybot.Message, ctx *Context) error {
@@ -41,20 +43,6 @@ func (me *handler) OnMessage(m *buddybot.Message, ctx *Context) error {
 		return nil
 	}
 
-	if cline.Arg0 == "ping" {
-
-		log.Debugf("sending pong...")
-		ctx.BroadcastMessage("pong")
-
-	} else if cline.Arg0 == "exec" {
-
-		cline.Args = cline.SliceArgs(1)
-
-		return me.execMessage(m.FromIdentity().Nick, m, ctx, cline.Args)
-
-	} else if cline.Arg0 == "echo" {
-		fmt.Printf("%s\n", line)
-	}
-
+	me.commands.Dispatch(m, ctx, cline)
 	return nil
 }
