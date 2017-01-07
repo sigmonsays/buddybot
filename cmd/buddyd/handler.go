@@ -117,6 +117,27 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 	return nil
 }
 
+// store the nickname
+func (h *chatHandler) storeNick(hub *buddybot.Hub, c *buddybot.Connection, id *buddybot.Identity) error {
+
+	existing_id, ok := h.nicknames[id.Nick]
+	if ok {
+
+		existing_conn, err := h.hub.FindConnection(existing_id)
+		if err == nil {
+			if existing_conn.GetId() != existing_id {
+				log.Warnf("nick name is already taken: %s by connection %s", id.Nick, existing_conn)
+				hub.Send(buddybot.NoticeOp, fmt.Sprintf("Nick name is already taken: %s", id.Nick))
+			}
+		}
+
+	} else {
+		cid := c.GetId()
+		h.nicknames[id.Nick] = cid
+	}
+	return nil
+}
+
 func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) (*buddybot.Identity, error) {
 	if m.From == "" {
 		return nil, fmt.Errorf("Join without a name (From not set)")
@@ -126,22 +147,7 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 	id, err := buddybot.ParseIdentity(m.From)
 	if err == nil {
 		log.Infof("connection %d is now known as %v (nick %s)", c.GetId(), id, id.Nick)
-
-		// store the nickname
-		existing_id, ok := h.nicknames[id.Nick]
-		if ok {
-
-			existing_conn, err := h.hub.FindConnection(existing_id)
-			if err == nil {
-				if existing_conn.GetId() != existing_id {
-					hub.Send(buddybot.NoticeOp, fmt.Sprintf("Nick name is already taken: %s", id.Nick))
-				}
-			}
-
-		} else {
-			cid := c.GetId()
-			h.nicknames[id.Nick] = cid
-		}
+		h.storeNick(hub, c, id)
 
 	} else {
 		m := &buddybot.Message{
@@ -189,7 +195,7 @@ func (h *chatHandler) handleDirectMessageOp(op buddybot.OpCode, hub *buddybot.Hu
 
 	m.IdTo = dconn.GetId()
 	log.Tracef("set message To=%s: connection id=%d", to_nick, m.IdTo)
-	hub.SendTo(dconn, m.Reply())
+	hub.SendTo(dconn, m)
 	return nil
 }
 
