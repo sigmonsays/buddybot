@@ -87,6 +87,9 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 	if op == buddybot.MessageOp {
 		h.handleMessageOp(op, hub, c, m)
 
+	} else if op == buddybot.DirectMessageOp {
+		h.handleDirectMessageOp(op, hub, c, m)
+
 	} else if op == buddybot.RegisterOp {
 		h.handleRegisterOp(op, hub, c, m)
 
@@ -151,42 +154,41 @@ func (h *chatHandler) setConnectionIdentity(op buddybot.OpCode, hub *buddybot.Hu
 	return id, nil
 }
 
-func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+func (h *chatHandler) handleDirectMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
 	log.Debugf("handleMessage %s/%d msg:%s", op, op, m)
-
 	var (
 		sconn *buddybot.Connection
 		dconn *buddybot.Connection
 		err   error
 	)
 
-	if m.From != "" {
-		from_nick := m.FromIdentity().Nick
-		sconn, err = h.findNick(from_nick)
-		if err == nil {
-			m.IdFrom = sconn.GetId()
-			log.Tracef("set message From=%s: connection id=%d", from_nick, m.IdFrom)
-		} else {
-			log.Warnf("findNick from=%s: %s", from_nick, err)
-		}
-	}
-
-	if m.To != "" {
-		to_nick := m.ToIdentity().Nick
-		dconn, err = h.findNick(to_nick)
-		if err == nil {
-			m.IdTo = dconn.GetId()
-			log.Tracef("set message To=%s: connection id=%d", to_nick, m.IdTo)
-		} else {
-			log.Warnf("findNick to=%s: %s", to_nick, err)
-		}
-	}
-
-	if m.IdTo == 0 {
-		hub.SendBroadcast(m)
+	from_nick := m.FromIdentity().Nick
+	sconn, err = h.findNick(from_nick)
+	if err == nil {
+		m.IdFrom = sconn.GetId()
+		log.Tracef("set message From=%s: connection id=%d", from_nick, m.IdFrom)
 	} else {
-		hub.SendTo(dconn, m.Reply())
+		log.Warnf("findNick from=%s: %s", from_nick, err)
 	}
+
+	to_nick := m.ToIdentity().Nick
+	dconn, err = h.findNick(to_nick)
+	if err == nil {
+		m.IdTo = dconn.GetId()
+		log.Tracef("set message To=%s: connection id=%d", to_nick, m.IdTo)
+	} else {
+		log.Warnf("findNick to=%s: %s", to_nick, err)
+	}
+	hub.SendTo(dconn, m.Reply())
+	return nil
+}
+
+// this message operation is broadcasted to everyone
+func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	log.Debugf("handleMessage %s/%d msg:%s", op, op, m)
+
+	hub.SendBroadcast(m)
+
 	return nil
 }
 

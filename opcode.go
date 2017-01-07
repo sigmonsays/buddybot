@@ -14,6 +14,7 @@ const (
 	UnregisterOp
 
 	// a message has been sent
+	// this type of message is broadcasted to everyone
 	MessageOp
 
 	// message directly to a single person
