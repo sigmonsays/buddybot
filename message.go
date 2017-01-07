@@ -28,10 +28,10 @@ type Message struct {
 	IdFrom int64
 
 	// to and from addresses
-	To   string `json:"to,omitempty"`
-	From string `json:"from,omitempty"`
+	To   string `json:"to"`
+	From string `json:"from"`
 
-	Message string `json:"message,omitempty"`
+	Message string `json:"message"`
 
 	// uniquely identify the message
 	Tag string `json:"tag,omitempty"`
