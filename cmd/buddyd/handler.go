@@ -185,7 +185,7 @@ func (h *chatHandler) handleMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *
 	if m.IdTo == 0 {
 		hub.SendBroadcast(m)
 	} else {
-		hub.SendTo(dconn, m)
+		hub.SendTo(dconn, m.Reply())
 	}
 	return nil
 }
