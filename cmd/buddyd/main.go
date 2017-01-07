@@ -22,8 +22,10 @@ func main() {
 	gopath := os.Getenv("GOPATH")
 	var staticDir string
 	loglevel := "warn"
+	verbose := false
 	flag.StringVar(&staticDir, "static", "", "location of static data")
 	flag.StringVar(&loglevel, "log", loglevel, "change log level")
+	flag.BoolVar(&verbose, "verbose", verbose, "be verbose (enable debug loggers)")
 
 	if staticDir == "" && gopath != "" {
 		staticDir = filepath.Join(gopath, "src/github.com/sigmonsays/buddybot/static")
@@ -34,6 +36,7 @@ func main() {
 	gologging.SetLogLevel(loglevel)
 
 	hub := buddybot.NewHub()
+	hub.SetVerbose(verbose)
 
 	srv, err := buddybot.NewHandler(hub)
 	if err != nil {
