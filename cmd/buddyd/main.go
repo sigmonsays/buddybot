@@ -21,7 +21,7 @@ func main() {
 
 	gopath := os.Getenv("GOPATH")
 	var staticDir string
-	loglevel := "warn"
+	loglevel := "info"
 	verbose := false
 	flag.StringVar(&staticDir, "static", "", "location of static data")
 	flag.StringVar(&loglevel, "log", loglevel, "change log level")
