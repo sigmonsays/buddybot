@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os/exec"
 )
@@ -89,6 +90,10 @@ func stream(input io.Reader, out chan string, finished chan bool) {
 func (me *ShellExec) ExecMessage(args []string) (*ExecResult, error) {
 
 	log.Debugf("exec line %q", args)
+
+	if args == nil || len(args) == 0 {
+		return nil, fmt.Errorf("args is empty")
+	}
 
 	var cmd *exec.Cmd
 
