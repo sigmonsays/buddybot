@@ -33,6 +33,17 @@ func (me *Context) BroadcastMessage(msg string) error {
 	return err
 }
 
+func (me *Context) Send(m *buddybot.Message) error {
+	buf, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	log.Tracef("Send cid=%d: %s", m.Id, buf)
+	err = me.Conn.WriteMessage(websocket.TextMessage, buf)
+	return err
+}
+
 func (me *Context) SendTo(cid int64, m *buddybot.Message) error {
 	m.Id = cid
 
