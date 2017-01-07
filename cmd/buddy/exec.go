@@ -53,7 +53,7 @@ func stream(input io.Reader, out chan string, wg sync.WaitGroup) {
 			if err == io.EOF {
 				break
 			}
-			log.Warnf("streame: ReadBytes: %s", err)
+			log.Warnf("stream: ReadBytes: %s", err)
 			break
 		}
 		out <- string(line)
