@@ -80,7 +80,7 @@ func main() {
 		if err != nil {
 			StartupError("can not find git command: %s", err)
 		}
-		log.Debugf("git patch %s", git_path)
+		log.Debugf("git path %s", git_path)
 
 		devrestarter.Init()
 		go GitWatch(conf)
