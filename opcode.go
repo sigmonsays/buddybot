@@ -34,6 +34,9 @@ const (
 	// Client List op sends a list of connected clients to the connection
 	ClientListOp
 
+	// instruct client to disconnect
+	DisconnectOp
+
 	// do nothing but print a log line
 	NoOp
 )
