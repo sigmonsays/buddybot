@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sigmonsays/buddybot"
+	"github.com/sigmonsays/buddybot/clipboard"
 )
 
 func NewCommandSet() *CommandSet {
@@ -22,6 +23,18 @@ type CommandSet struct {
 func (me *CommandSet) init() {
 	c := me.cmds
 	c["ping"] = me.Ping
+	c["exec"] = me.Exec
+	c["echo"] = me.Echo
+	c["clipboard"] = me.Clipboard
+}
+
+func (me *CommandSet) Dispatch(m *buddybot.Message, ctx *Context, cline *CommandLine) error {
+	log.Tracef("dispatch %s", cline)
+	cmd, ok := me.cmds[cline.Arg0]
+	if ok == false {
+		return fmt.Errorf("command not found: %s", cline.Arg0)
+	}
+	return cmd(m, ctx, cline)
 }
 
 func (me *CommandSet) Ping(m *buddybot.Message, ctx *Context, cline *CommandLine) error {
@@ -40,10 +53,31 @@ func (me *CommandSet) Exec(m *buddybot.Message, ctx *Context, cline *CommandLine
 	return me.execMessage(m.FromIdentity().Nick, m, ctx, cline.Args)
 }
 
-func (me *CommandSet) Dispatch(m *buddybot.Message, ctx *Context, cline *CommandLine) error {
-	cmd, ok := me.cmds[cline.Arg0]
-	if ok == false {
-		return fmt.Errorf("command not found: %s", cline)
+func (me *CommandSet) Clipboard(m *buddybot.Message, ctx *Context, cline *CommandLine) error {
+
+	cline.Args = cline.SliceArgs(1)
+	cmd := cline.Arg(0)
+
+	xclip := clipboard.NewXClip()
+	if cmd == "get" {
+
+		value, err := xclip.GetString()
+		if err != nil {
+			return ctx.Reply(m, "error: GetString %s", err)
+		}
+
+		return ctx.Reply(m, "%s", value)
+
+	} else if cmd == "set" {
+		value := cline.Arg(1)
+		err := xclip.SetString(value)
+		if err != nil {
+			return ctx.Reply(m, "error: %s", err)
+		}
+
+		return ctx.Reply(m, "-- clipboard set -- ")
+
 	}
-	return cmd(m, ctx, cline)
+
+	return nil
 }

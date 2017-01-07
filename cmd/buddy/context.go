@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/gorilla/websocket"
 
@@ -42,6 +43,13 @@ func (me *Context) Send(m *buddybot.Message) error {
 	log.Tracef("Send cid=%d: %s", m.Id, buf)
 	err = me.Conn.WriteMessage(websocket.TextMessage, buf)
 	return err
+}
+
+// convenience function to reply to a given message
+func (me *Context) Reply(m *buddybot.Message, s string, args ...interface{}) error {
+	reply := m.Copy()
+	reply.Message = fmt.Sprintf(s, args...)
+	return me.Send(reply)
 }
 
 func (me *Context) SendTo(cid int64, m *buddybot.Message) error {

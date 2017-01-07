@@ -46,12 +46,13 @@ func (me *handler) DirectMessage(m *buddybot.Message, ctx *Context) error {
 		reply := m.Reply()
 		if mention == "all" {
 			reply.Op = buddybot.MessageOp
+			reply.To = ""
 		} else {
 			reply.Op = buddybot.DirectMessageOp
 			reply.To = mention
 		}
-		log.Infof("No such command: %s", line)
-		ctx.Send(reply.WithMessage("no such command: %s", line))
+		log.Infof("dispatch %s error: %s", line, err)
+		ctx.Send(reply.WithMessage("dispatch %s error: %s", line, err))
 	}
 
 	return nil
