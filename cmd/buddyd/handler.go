@@ -119,7 +119,6 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 
 // store the nickname
 func (h *chatHandler) storeNick(hub *buddybot.Hub, c *buddybot.Connection, id *buddybot.Identity) error {
-
 	existing_id, ok := h.nicknames[id.Nick]
 	if ok {
 
@@ -134,6 +133,7 @@ func (h *chatHandler) storeNick(hub *buddybot.Hub, c *buddybot.Connection, id *b
 	} else {
 		cid := c.GetId()
 		h.nicknames[id.Nick] = cid
+		log.Infof("connection %s is now known as %q", c, id.Nick)
 	}
 	return nil
 }
