@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/facebookgo/devrestarter"
@@ -137,7 +138,9 @@ type state struct {
 	connstate chan ConnState
 	lines     chan string
 
-	c       *websocket.Conn
+	c  *websocket.Conn
+	mx sync.Mutex
+
 	handler *handler
 	context *Context
 
@@ -319,6 +322,9 @@ func (me *state) receiveMessage(msg []byte) error {
 }
 
 func (me *state) sendMessage(msg []byte) error {
+	me.mx.Lock()
+	defer me.mx.Unlock()
+	log.Tracef("sendMessage %s", msg)
 	err := me.c.WriteMessage(websocket.TextMessage, msg)
 	return err
 }

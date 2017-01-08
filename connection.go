@@ -2,6 +2,7 @@ package buddybot
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -36,6 +37,8 @@ type Connection struct {
 
 	// The websocket connection.
 	ws *websocket.Conn
+
+	mx sync.Mutex
 
 	// Buffered channel of outbound messages.
 	send chan *Message
@@ -72,6 +75,9 @@ func (c *Connection) readPump() {
 
 // write writes a message with the given message type and payload.
 func (c *Connection) write(mt int, payload []byte) error {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+
 	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 	return c.ws.WriteMessage(mt, payload)
 }
