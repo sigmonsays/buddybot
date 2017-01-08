@@ -239,7 +239,7 @@ func (h *chatHandler) handleUnregisterOp(op buddybot.OpCode, hub *buddybot.Hub, 
 }
 
 func (h *chatHandler) handleRegisterOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
-	hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has disconnected", c.Identity))
+	hub.Send(buddybot.NoticeOp, fmt.Sprintf("%s has connected", c.Identity))
 	return nil
 }
 
