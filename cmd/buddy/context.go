@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/gorilla/websocket"
 
@@ -12,6 +13,7 @@ import (
 type Context struct {
 	Identity *buddybot.Identity
 	Conn     *websocket.Conn
+	mx       sync.Mutex
 }
 
 func (me *Context) NewMessage() *buddybot.Message {
@@ -23,6 +25,9 @@ func (me *Context) NewMessage() *buddybot.Message {
 }
 
 func (me *Context) BroadcastMessage(msg string) error {
+	me.mx.Lock()
+	defer me.mx.Unlock()
+
 	m := me.NewMessage()
 	m.Message = msg
 
@@ -35,6 +40,8 @@ func (me *Context) BroadcastMessage(msg string) error {
 }
 
 func (me *Context) Send(m *buddybot.Message) error {
+	me.mx.Lock()
+	defer me.mx.Unlock()
 	buf, err := json.Marshal(m)
 	if err != nil {
 		return err
@@ -54,6 +61,8 @@ func (me *Context) Reply(m *buddybot.Message, s string, args ...interface{}) err
 }
 
 func (me *Context) SendTo(cid int64, m *buddybot.Message) error {
+	me.mx.Lock()
+	defer me.mx.Unlock()
 	m.Id = cid
 
 	buf, err := json.Marshal(m)
