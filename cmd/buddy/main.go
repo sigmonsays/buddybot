@@ -68,6 +68,14 @@ func main() {
 
 	if verbose {
 		conf.PrintYaml()
+		for name, level := range conf.VerboseLogLevels {
+			gologging.SetLevel(name, level)
+		}
+
+	} else {
+		for name, level := range conf.LogLevels {
+			gologging.SetLevel(name, level)
+		}
 	}
 
 	if conf.GitWatch {

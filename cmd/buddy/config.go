@@ -13,6 +13,12 @@ var defaultConfig = `
 # begin default built it configuration
 
 log_level: info
+log_levels:
+  git: warn
+
+verbose_log_levels:
+  git: trace
+
 reconnect_delay: 10s
 server_address: "localhost:8081"
 git_watch: true
@@ -21,11 +27,13 @@ git_watch: true
 `
 
 type BuddyConfig struct {
-	Hostname       string
-	LogLevel       string `yaml:"log_level"`
-	Nick           string
-	ServerAddress  string        `yaml:"server_address"`
-	ReconnectDelay time.Duration `yaml:"reconnect_delay"`
+	Hostname         string
+	LogLevel         string            `yaml:"log_level"`
+	LogLevels        map[string]string `yaml:"log_levels"`
+	VerboseLogLevels map[string]string `yaml:"verbose_log_levels"`
+	Nick             string
+	ServerAddress    string        `yaml:"server_address"`
+	ReconnectDelay   time.Duration `yaml:"reconnect_delay"`
 
 	GitWatch bool `yaml:"git_watch"`
 }
