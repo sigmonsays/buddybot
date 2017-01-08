@@ -43,6 +43,9 @@ func (me *handler) OnMessage(m *buddybot.Message, ctx *Context) error {
 		return nil
 	}
 
-	me.commands.Dispatch(m, ctx, cline)
+	if m.Op == buddybot.MessageOp || m.Op == buddybot.DirectMessageOp {
+		me.commands.Dispatch(m, ctx, cline)
+	}
+
 	return nil
 }

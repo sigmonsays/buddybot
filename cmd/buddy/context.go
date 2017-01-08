@@ -48,6 +48,7 @@ func (me *Context) Send(m *buddybot.Message) error {
 // convenience function to reply to a given message
 func (me *Context) Reply(m *buddybot.Message, s string, args ...interface{}) error {
 	reply := m.Copy()
+	reply.Op = buddybot.RawMessageOp
 	reply.Message = fmt.Sprintf(s, args...)
 	return me.Send(reply)
 }

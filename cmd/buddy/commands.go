@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/sigmonsays/buddybot"
-	"github.com/sigmonsays/buddybot/clipboard"
 )
 
 func NewCommandSet() *CommandSet {
@@ -51,33 +50,4 @@ func (me *CommandSet) Echo(m *buddybot.Message, ctx *Context, cline *CommandLine
 func (me *CommandSet) Exec(m *buddybot.Message, ctx *Context, cline *CommandLine) error {
 	cline.Args = cline.SliceArgs(1)
 	return me.execMessage(m.FromIdentity().Nick, m, ctx, cline.Args)
-}
-
-func (me *CommandSet) Clipboard(m *buddybot.Message, ctx *Context, cline *CommandLine) error {
-
-	cline.Args = cline.SliceArgs(1)
-	cmd := cline.Arg(0)
-
-	xclip := clipboard.NewXClip()
-	if cmd == "get" {
-
-		value, err := xclip.GetString()
-		if err != nil {
-			return ctx.Reply(m, "error: GetString %s", err)
-		}
-
-		return ctx.Reply(m, "%s", value)
-
-	} else if cmd == "set" {
-		value := cline.Arg(1)
-		err := xclip.SetString(value)
-		if err != nil {
-			return ctx.Reply(m, "error: %s", err)
-		}
-
-		return ctx.Reply(m, "-- clipboard set -- ")
-
-	}
-
-	return nil
 }

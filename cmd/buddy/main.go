@@ -279,6 +279,9 @@ func (me *state) receiveMessage(msg []byte) error {
 		log.Infof("JOIN from=%s cid=%d", m.From, m.Id)
 		// me.handler.OnJoin(m)
 
+	} else if m.Op == buddybot.RawMessageOp {
+		me.handler.OnMessage(m, me.context)
+
 	} else if m.Op == buddybot.MessageOp {
 		me.handler.OnMessage(m, me.context)
 
