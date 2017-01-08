@@ -111,6 +111,7 @@ func (h *Hub) SendBroadcast(m *Message) {
 	cnt := 0
 	err := 0
 	for c := range h.connections {
+
 		cnt++
 		h.setMessageIdentity(c, m)
 		h.log.Tracef("send client(%s) msg(%+v)", c, m)
