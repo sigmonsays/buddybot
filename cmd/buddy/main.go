@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net"
 	"net/url"
 	"os"
 	"os/exec"
@@ -132,6 +133,44 @@ func main() {
 	// signal to interrupt
 	state.interrupt = make(chan os.Signal, 1)
 	signal.Notify(state.interrupt, os.Interrupt)
+
+	// read from clients
+	srv, err := net.Listen("tcp", conf.BuddyServer)
+	if err != nil {
+		StartupError("Listen %s", err)
+	}
+
+	LineServer := func(con net.Conn, lines chan string) {
+		defer con.Close()
+
+		bio := bufio.NewReader(con)
+		for {
+			line, err := bio.ReadBytes('\n')
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				log.Warnf("ReadBytes: %s", err)
+				break
+			}
+			sline := string(line)
+			if sline == ".\n" {
+				break
+			}
+			lines <- sline
+		}
+	}
+
+	go func() {
+		for {
+			con, err := srv.Accept()
+			if err != nil {
+				log.Warnf("Accept: %s", err)
+				continue
+			}
+			go LineServer(con, state.lines)
+		}
+	}()
 
 	// read from stdin for commands
 	state.lines = make(chan string, 2)
