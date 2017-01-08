@@ -180,6 +180,10 @@ func (h *Hub) dispatch(op OpCode, c *Connection, m *Message) error {
 	return nil
 }
 
+func (h *Hub) Register(c *Connection) {
+	h.register <- c
+}
+
 func (h *Hub) Start() {
 
 	if h.verbose {
