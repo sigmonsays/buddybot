@@ -29,7 +29,7 @@ func (me *handler) OnNotice(m *buddybot.Message, ctx *Context) error {
 // handles both direct messages and broadcast messages
 func (me *handler) OnMessage(m *buddybot.Message, ctx *Context) error {
 	log.Debugf("got message %s", m)
-	fmt.Printf("MESSAGE <%s> %s\n", m.From, m.Message)
+	fmt.Printf("<%s> %s\n", m.From, m.Message)
 
 	line := m.Message
 
