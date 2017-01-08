@@ -20,6 +20,7 @@ import (
 	"github.com/facebookgo/devrestarter"
 	"github.com/gorilla/websocket"
 	"github.com/sigmonsays/buddybot"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	gologging "github.com/sigmonsays/go-logging"
 )
@@ -47,7 +48,8 @@ func main() {
 	flag.Parse()
 
 	// load home config
-	user_conf := filepath.Join(os.Getenv("HOME"), ".buddy", "buddy.yaml")
+	datadir := filepath.Join(os.Getenv("HOME"), ".buddy")
+	user_conf := filepath.Join(datadir, "buddy.yaml")
 	st, err := os.Stat(user_conf)
 	if err == nil && st.IsDir() == false {
 
@@ -64,6 +66,15 @@ func main() {
 		log.Warnf("nick name not set, using generated %s", conf.Nick)
 	}
 
+	// setup lumberjack logging
+	filelog_name := filepath.Join(datadir, "buddy.log")
+	ljack := &lumberjack.Logger{
+		Filename:   filelog_name,
+		MaxSize:    500, // megabytes
+		MaxBackups: 3,
+		MaxAge:     28, //days
+	}
+
 	gologging.SetLogLevel(conf.LogLevel)
 
 	if verbose {
@@ -73,6 +84,9 @@ func main() {
 		}
 
 	} else {
+
+		gologging.SetLogOutput(ljack)
+
 		for name, level := range conf.LogLevels {
 			gologging.SetLevel(name, level)
 		}
