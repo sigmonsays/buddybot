@@ -2,6 +2,8 @@ package clipboard
 
 import (
 	"os/exec"
+
+	"github.com/sigmonsays/buddybot/util"
 )
 
 func NewXClip() *XClip {
@@ -22,12 +24,12 @@ type XClip struct {
 func (me *XClip) SetString(s string) error {
 	log.Debugf("SetString: %q", s)
 	cmdline := []string{me.path, "-i"}
-	return StdinCommand(cmdline, s)
+	return util.StdinCommand(cmdline, s)
 }
 
 func (me *XClip) GetString() (string, error) {
 	cmdline := []string{me.path, "-o"}
-	out, err := StdoutCommand(cmdline)
+	out, err := util.StdoutCommand(cmdline)
 	if err != nil {
 		return out, err
 	}

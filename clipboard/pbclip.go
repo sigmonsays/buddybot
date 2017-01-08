@@ -1,6 +1,10 @@
 package clipboard
 
-import "os/exec"
+import (
+	"os/exec"
+
+	"github.com/sigmonsays/buddybot/util"
+)
 
 func NewPBClip() *PBClip {
 	pbcopy, err := exec.LookPath("pbcopy")
@@ -26,12 +30,12 @@ type PBClip struct {
 func (me *PBClip) SetString(s string) error {
 	log.Debugf("SetString: %q", s)
 	cmdline := []string{me.pbcopy, "-i"}
-	return StdinCommand(cmdline, s)
+	return util.StdinCommand(cmdline, s)
 }
 
 func (me *PBClip) GetString() (string, error) {
 	cmdline := []string{me.pbpaste, "-o"}
-	out, err := StdoutCommand(cmdline)
+	out, err := util.StdoutCommand(cmdline)
 	if err != nil {
 		return out, err
 	}
