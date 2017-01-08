@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -55,40 +56,50 @@ func (me *upgrader) OnChange(dir, branch, lhash, rhash string) error {
 		return nil
 	}
 	var cmdline []string
+	var err error
 
 	// do a git pull
 	cmdline = []string{"git", "pull"}
-	cmd := exec.Command(cmdline[0], cmdline[1:]...)
-	cmd.Dir = me.upgrade_dir
-	err := cmd.Start()
+	err = me.doCommand(cmdline)
 	if err != nil {
-		log.Warnf("upgarde error: git pull: %s", err)
+		log.Warnf("%s", err)
 		return nil
 	}
 
 	// do the upgrade (this will pull it any dependencies)
 	cmdline = []string{"go", "get", "-u", me.go_pkg}
-	cmd = exec.Command(cmdline[0], cmdline[1:]...)
-	cmd.Dir = me.upgrade_dir
-	err = cmd.Start()
+	err = me.doCommand(cmdline)
 	if err != nil {
-		log.Warnf("upgrade error: go get %s", err)
+		log.Warnf("%s", err)
 		return nil
 	}
 
 	// do the install
 	cmdline = []string{"go", "install", me.go_pkg}
-	cmd = exec.Command(cmdline[0], cmdline[1:]...)
-	cmd.Dir = me.upgrade_dir
-	err = cmd.Start()
+	err = me.doCommand(cmdline)
 	if err != nil {
-		log.Warnf("upgrade error: go install %s", err)
+		log.Warnf("%s", err)
 		return nil
 	}
 
 	new_version, _ := me.GetVersion()
 	log.Infof("Upgraded version from %s to %s", old_version, new_version)
 
+	return nil
+}
+
+func (me *upgrader) doCommand(cmdline []string) error {
+	// do the install
+	cmd := exec.Command(cmdline[0], cmdline[1:]...)
+	cmd.Dir = me.upgrade_dir
+	err := cmd.Start()
+	if err != nil {
+		return fmt.Errorf("upgrade error: %s: %s", cmdline, err)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return fmt.Errorf("upgrade error: %s: %s", cmdline, err)
+	}
 	return nil
 }
 
