@@ -87,6 +87,9 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 	if op == buddybot.MessageOp {
 		h.handleMessageOp(op, hub, c, m)
 
+	} else if op == buddybot.RawMessageOp {
+		h.handleRawMessageOp(op, hub, c, m)
+
 	} else if op == buddybot.DirectMessageOp {
 		h.handleDirectMessageOp(op, hub, c, m)
 
@@ -112,7 +115,7 @@ func (h *chatHandler) handleMessage(op buddybot.OpCode, hub *buddybot.Hub, c *bu
 		h.handleClientListOp(op, hub, c, m)
 
 	} else {
-		log.Infof("Unhandled op %s/%d: %+v", m.Op, m.Op, m)
+		log.Warnf("Unhandled op %s/%d: %+v", m.Op, m.Op, m)
 	}
 	return nil
 }
@@ -195,6 +198,19 @@ func (h *chatHandler) handleDirectMessageOp(op buddybot.OpCode, hub *buddybot.Hu
 	m.IdTo = dconn.GetId()
 	log.Tracef("set message To=%s: connection id=%d", to_nick, m.IdTo)
 	hub.SendTo(dconn, m)
+	return nil
+}
+
+func (h *chatHandler) handleRawMessageOp(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+	log.Debugf("handleMessage %s/%d msg:%s", op, op, m)
+
+	if m.From == "" {
+		log.Warnf("dropping message without from address: %s", m)
+		return nil
+	}
+
+	hub.SendBroadcast(m)
+
 	return nil
 }
 
