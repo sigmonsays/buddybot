@@ -138,7 +138,7 @@ type state struct {
 	connstate chan ConnState
 	lines     chan string
 
-	c  *websocket.Conn
+	c  *Connection
 	mx sync.Mutex
 
 	handler *handler
@@ -176,8 +176,8 @@ func (me *state) ioloop() error {
 		return err
 	}
 
-	me.context.Conn = c
-	me.c = c
+	me.context.Conn = NewConnection(c)
+	me.c = NewConnection(c)
 
 	log.Infof("Connecton established")
 
@@ -189,7 +189,7 @@ func (me *state) ioloop() error {
 		defer c.Close()
 		defer close(done)
 		for {
-			_, message, err := c.ReadMessage()
+			_, message, err := me.c.ReadMessage()
 			if err != nil {
 				log.Warnf("read: %s", err)
 				me.connstate <- Disconnected
@@ -207,7 +207,7 @@ func (me *state) ioloop() error {
 	j := me.context.NewMessage()
 	j.Op = buddybot.JoinOp
 	j.Message = "JOIN EVENT"
-	err = c.WriteMessage(websocket.TextMessage, j.Json())
+	err = me.c.WriteMessage(websocket.TextMessage, j.Json())
 	if err != nil {
 		log.Infof("join: write: %s", err)
 	}
@@ -216,7 +216,7 @@ func (me *state) ioloop() error {
 	// see who is online
 	l := me.context.NewMessage()
 	l.Op = buddybot.ClientListOp
-	err = c.WriteMessage(websocket.TextMessage, l.Json())
+	err = me.c.WriteMessage(websocket.TextMessage, l.Json())
 	if err != nil {
 		log.Infof("clientList: write: %s", err)
 	}
@@ -249,7 +249,7 @@ func (me *state) ioloop() error {
 
 		case <-me.interrupt:
 			log.Infof("Interrupt received..")
-			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			err := me.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				log.Infof("message: write close: %s", err)
 				return err

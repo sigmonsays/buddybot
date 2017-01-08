@@ -12,7 +12,7 @@ import (
 
 type Context struct {
 	Identity *buddybot.Identity
-	Conn     *websocket.Conn
+	Conn     *Connection
 	mx       sync.Mutex
 }
 
