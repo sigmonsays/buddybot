@@ -15,13 +15,20 @@ const (
 
 	// a message has been sent
 	// this type of message is broadcasted to everyone
+	// messages are dispatched to command handlers in buddy too
 	MessageOp
+
+	// a message has been sent
+	// this type of message is broadcasted to everyone
+	// this message is not disaptched to command handlers in buddy
+	RawMessageOp
 
 	// message directly to a single person
 	DirectMessageOp
 
 	// a notice is a informational message. likely from the system
 	NoticeOp
+
 	// a user has joined
 	JoinOp
 
