@@ -18,7 +18,7 @@ func (me *CommandSet) Clipboard(m *buddybot.Message, ctx *Context, cline *Comman
 			return ctx.Reply(m, "error: GetString %s", err)
 		}
 
-		return ctx.Reply(m, "%s", value)
+		return ctx.Reply(m, "%q", value)
 
 	} else if cmd == "set" {
 		value := cline.Arg(1)

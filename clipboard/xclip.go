@@ -6,15 +6,24 @@ import (
 )
 
 func NewXClip() *XClip {
-	return &XClip{}
+
+	path, err := exec.LookPath("xclip")
+	if err != nil {
+		log.Warnf("clipboard functionality probably wont work")
+	}
+
+	return &XClip{
+		path: path,
+	}
 }
 
 type XClip struct {
+	path string
 }
 
 func (me *XClip) SetString(s string) error {
 	log.Debugf("SetString: %q", s)
-	cmdline := []string{"xclip", "-i"}
+	cmdline := []string{me.path, "-i"}
 	cmd := exec.Command(cmdline[0], cmdline[1:]...)
 	cmd.Stdin = bytes.NewBufferString(s)
 	err := cmd.Start()
@@ -29,7 +38,7 @@ func (me *XClip) SetString(s string) error {
 }
 
 func (me *XClip) GetString() (string, error) {
-	cmdline := []string{"xclip", "-o"}
+	cmdline := []string{me.path, "-o"}
 	cmd := exec.Command(cmdline[0], cmdline[1:]...)
 	out, err := cmd.Output()
 	if err != nil {
