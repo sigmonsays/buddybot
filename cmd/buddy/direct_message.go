@@ -11,6 +11,10 @@ import (
 // more precisely only the node <nick> should response
 //
 func (me *handler) DirectMessage(m *buddybot.Message, ctx *Context) error {
+
+	// always force our name in the To field
+	m.To = me.identity.String()
+
 	log.Debugf("direct message %s", m)
 
 	var mention string
