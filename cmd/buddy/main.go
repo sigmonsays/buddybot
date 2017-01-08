@@ -304,7 +304,7 @@ func (me *state) receiveMessage(msg []byte) error {
 				log.Debugf("ParseIdentity %q: %s", c.Identity, err)
 				id = &buddybot.Identity{}
 			}
-			fmt.Printf(" client cid=%-4s nick=%-25s %s\n", strconv.FormatInt(c.Id, 10), id.Nick, id)
+			fmt.Printf(" client cid=%-4s %-25s %s\n", strconv.FormatInt(c.Id, 10), id.Nick, id)
 		}
 		fmt.Printf("\n")
 
