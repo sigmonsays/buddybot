@@ -211,9 +211,8 @@ func (me *state) ioloop() error {
 
 	id := int64(1)
 	c := buddybot.NewConnection(hub, id, wsconn)
-	// hub.Register(c)
-
 	c.Start()
+	hub.Register(c)
 
 	me.c = c
 	me.context.Conn = c
@@ -227,9 +226,10 @@ func (me *state) ioloop() error {
 	// just wait on interrupt
 	for {
 		select {
+
 		case cstate := <-me.connstate:
 			if cstate == Disconnected {
-				log.Tracef("disconnected.")
+				log.Infof("disconnected.")
 				return fmt.Errorf("Disconnected")
 			}
 
@@ -272,6 +272,12 @@ func (me *state) ioloop() error {
 }
 
 func (me *state) receiveMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
+
+	if m == nil {
+		m = buddybot.NewMessage()
+		m.Op = op
+	}
+
 	if me.verbose {
 		log.Tracef("receiveMessage bytes %#v", m)
 	}
@@ -282,6 +288,10 @@ func (me *state) receiveMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddyb
 
 	} else if m.Op == buddybot.RawMessageOp {
 		me.handler.OnMessage(m, me.context)
+
+	} else if m.Op == buddybot.UnregisterOp {
+		me.connstate <- Disconnected
+		return io.EOF
 
 	} else if m.Op == buddybot.MessageOp {
 		me.handler.OnMessage(m, me.context)
