@@ -10,10 +10,10 @@ func (me *CommandSet) Clipboard(m *buddybot.Message, ctx *Context, cline *Comman
 	cline.Args = cline.SliceArgs(1)
 	cmd := cline.Arg(0)
 
-	xclip := clipboard.NewXClip()
+	clip := clipboard.NewClipboard()
 	if cmd == "get" {
 
-		value, err := xclip.GetString()
+		value, err := clip.GetString()
 		if err != nil {
 			return ctx.Reply(m, "error: GetString %s", err)
 		}
@@ -22,7 +22,7 @@ func (me *CommandSet) Clipboard(m *buddybot.Message, ctx *Context, cline *Comman
 
 	} else if cmd == "set" {
 		value := cline.Arg(1)
-		err := xclip.SetString(value)
+		err := clip.SetString(value)
 		if err != nil {
 			return ctx.Reply(m, "error: %s", err)
 		}

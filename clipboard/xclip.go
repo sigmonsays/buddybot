@@ -1,12 +1,10 @@
 package clipboard
 
 import (
-	"bytes"
 	"os/exec"
 )
 
 func NewXClip() *XClip {
-
 	path, err := exec.LookPath("xclip")
 	if err != nil {
 		log.Warnf("clipboard functionality probably wont work")
@@ -24,27 +22,15 @@ type XClip struct {
 func (me *XClip) SetString(s string) error {
 	log.Debugf("SetString: %q", s)
 	cmdline := []string{me.path, "-i"}
-	cmd := exec.Command(cmdline[0], cmdline[1:]...)
-	cmd.Stdin = bytes.NewBufferString(s)
-	err := cmd.Start()
-	if err != nil {
-		return err
-	}
-	err = cmd.Wait()
-	if err != nil {
-		return err
-	}
-	return nil
+	return StdinCommand(cmdline, s)
 }
 
 func (me *XClip) GetString() (string, error) {
 	cmdline := []string{me.path, "-o"}
-	cmd := exec.Command(cmdline[0], cmdline[1:]...)
-	out, err := cmd.Output()
+	out, err := StdoutCommand(cmdline)
 	if err != nil {
-		return "", err
+		return out, err
 	}
-	s := string(out)
-	log.Debugf("GetString: %q", s)
-	return s, nil
+	log.Debugf("GetString: %q", out)
+	return out, nil
 }
