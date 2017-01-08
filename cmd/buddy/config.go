@@ -14,7 +14,7 @@ var defaultConfig = `
 
 log_level: info
 log_levels:
-  git: warn
+  git: info
 
 verbose_log_levels:
   git: trace
