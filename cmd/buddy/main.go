@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/facebookgo/devrestarter"
@@ -138,8 +137,7 @@ type state struct {
 	connstate chan ConnState
 	lines     chan string
 
-	c  *Connection
-	mx sync.Mutex
+	c *buddybot.Connection
 
 	handler *handler
 	context *Context
@@ -164,50 +162,12 @@ func (me *state) loop() error {
 	return err
 }
 
-func (me *state) ioloop() error {
-
-	// establish connection
-	u := url.URL{Scheme: "ws", Host: me.addr, Path: me.path}
-
-	log.Infof("Connecting to %s", u.String())
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		log.Debugf("dial: %s", err)
-		return err
-	}
-
-	me.context.Conn = NewConnection(c)
-	me.c = NewConnection(c)
-
-	log.Infof("Connecton established")
-
-	done := make(chan struct{})
-
-	// startup the receive loop
-	go func() {
-		log.Tracef("receive loop started")
-		defer c.Close()
-		defer close(done)
-		for {
-			_, message, err := me.c.ReadMessage()
-			if err != nil {
-				log.Warnf("read: %s", err)
-				me.connstate <- Disconnected
-				return
-			}
-			err = me.receiveMessage(message)
-			if err != nil {
-				log.Warnf("receiveMessage: %s", err)
-			}
-		}
-		log.Tracef("receive loop exited")
-	}()
-
+func (me *state) introduction() error {
 	// send a join message
 	j := me.context.NewMessage()
 	j.Op = buddybot.JoinOp
 	j.Message = "JOIN EVENT"
-	err = me.c.WriteMessage(websocket.TextMessage, j.Json())
+	err := me.c.WriteMessage(websocket.TextMessage, j.Json())
 	if err != nil {
 		log.Infof("join: write: %s", err)
 	}
@@ -220,6 +180,41 @@ func (me *state) ioloop() error {
 	if err != nil {
 		log.Infof("clientList: write: %s", err)
 	}
+	return nil
+}
+
+func (me *state) ioloop() error {
+
+	// establish connection
+	u := url.URL{Scheme: "ws", Host: me.addr, Path: me.path}
+
+	log.Infof("Connecting to %s", u.String())
+	wsconn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		log.Debugf("dial: %s", err)
+		return err
+	}
+
+	hub := buddybot.NewHub()
+	for _, op := range buddybot.OpCodes() {
+		hub.OnCallback(op, me.receiveMessage)
+	}
+	go hub.Start()
+
+	id := int64(1)
+	c := buddybot.NewConnection(hub, id, wsconn)
+	// hub.Register(c)
+
+	c.Start()
+
+	me.c = c
+	me.context.Conn = c
+
+	me.introduction()
+
+	log.Infof("Connecton established")
+
+	done := make(chan struct{})
 
 	// just wait on interrupt
 	for {
@@ -268,14 +263,9 @@ func (me *state) ioloop() error {
 	return nil
 }
 
-func (me *state) receiveMessage(msg []byte) error {
+func (me *state) receiveMessage(op buddybot.OpCode, hub *buddybot.Hub, c *buddybot.Connection, m *buddybot.Message) error {
 	if me.verbose {
-		log.Tracef("receiveMessage bytes %s", msg)
-	}
-	m := me.context.NewMessage()
-	err := json.Unmarshal(msg, m)
-	if err != nil {
-		return err
+		log.Tracef("receiveMessage bytes %#v", m)
 	}
 
 	if m.Op == buddybot.JoinOp {
@@ -298,7 +288,7 @@ func (me *state) receiveMessage(msg []byte) error {
 		// me.handler.OnClientList(m)
 
 		cl := buddybot.NewClientList()
-		err = cl.FromJsonString(m.Message)
+		err := cl.FromJsonString(m.Message)
 		if err != nil {
 			log.Warnf("ClientList: %s", err)
 			return nil
@@ -322,8 +312,6 @@ func (me *state) receiveMessage(msg []byte) error {
 }
 
 func (me *state) sendMessage(msg []byte) error {
-	me.mx.Lock()
-	defer me.mx.Unlock()
 	log.Tracef("sendMessage %s", msg)
 	err := me.c.WriteMessage(websocket.TextMessage, msg)
 	return err

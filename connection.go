@@ -27,6 +27,16 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+func NewConnection(hub *Hub, id int64, ws *websocket.Conn) *Connection {
+	c := &Connection{
+		id:   id,
+		hub:  hub,
+		send: make(chan *Message, 256),
+		ws:   ws,
+	}
+	return c
+}
+
 // connection is an middleman between the websocket connection and the hub.
 type Connection struct {
 	hub *Hub
@@ -80,6 +90,15 @@ func (c *Connection) write(mt int, payload []byte) error {
 
 	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 	return c.ws.WriteMessage(mt, payload)
+}
+
+func (c *Connection) Start() {
+	go c.readPump()
+	go c.writePump()
+}
+
+func (c *Connection) WriteMessage(mt int, payload []byte) error {
+	return c.write(mt, payload)
 }
 
 // writePump pumps messages from the hub to the websocket connection.

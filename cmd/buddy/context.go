@@ -12,7 +12,7 @@ import (
 
 type Context struct {
 	Identity *buddybot.Identity
-	Conn     *Connection
+	Conn     *buddybot.Connection
 	mx       sync.Mutex
 }
 
