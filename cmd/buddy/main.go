@@ -117,6 +117,7 @@ func main() {
 	}
 	state := &state{
 		addr:      conf.ServerAddress,
+		scheme:    conf.Scheme,
 		path:      path,
 		identity:  identity,
 		connstate: make(chan ConnState, 10),
@@ -192,6 +193,7 @@ func main() {
 type state struct {
 	verbose   bool
 	addr      string
+	scheme    string
 	path      string
 	identity  *buddybot.Identity
 	interrupt chan os.Signal
@@ -247,7 +249,7 @@ func (me *state) introduction() error {
 func (me *state) ioloop() error {
 
 	// establish connection
-	u := url.URL{Scheme: "ws", Host: me.addr, Path: me.path}
+	u := url.URL{Scheme: me.scheme, Host: me.addr, Path: me.path}
 
 	log.Infof("Connecting to %s", u.String())
 	wsconn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)

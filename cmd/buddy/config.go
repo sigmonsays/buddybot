@@ -21,7 +21,8 @@ verbose_log_levels:
 
 buddy_server: :6060
 reconnect_delay: 10s
-server_address: "localhost:8081"
+scheme: wss
+server_address: localhost
 git_watch: true
 
 # end default built it configuration
@@ -34,6 +35,7 @@ type BuddyConfig struct {
 	VerboseLogLevels map[string]string `yaml:"verbose_log_levels"`
 	Nick             string
 	ServerAddress    string        `yaml:"server_address"`
+	Scheme           string        `yaml:"scheme"`
 	ReconnectDelay   time.Duration `yaml:"reconnect_delay"`
 	BuddyServer      string        `yaml:"buddy_server"`
 
